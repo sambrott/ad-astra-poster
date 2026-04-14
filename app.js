@@ -48,7 +48,7 @@ const TYPE_DESKTOP_RATIO_REF = 1.22;
 /** Extra multiplier on mobile wormhole type (smaller on phones). */
 const MOBILE_TYPE_EXTRA_FACTOR = 0.88;
 /** Narrow viewports only: added to end translateY so the astronaut rests lower (px). */
-const ASTRONAUT_MOBILE_REST_DOWN_PX = 32;
+const ASTRONAUT_MOBILE_REST_DOWN_PX = 8;
 /** Desktop astronaut end nudge (px), added after geometry + ASTRONAUT_END_EXTRA_DOWN_PX. */
 const ASTRONAUT_DESKTOP_NUDGE_PX = 0;
 
