@@ -14,6 +14,11 @@
   --poster-stage-h: calc(
     var(--poster-stage-h-base) + var(--poster-stage-h-extra) - var(--poster-stage-h-lower-top)
   );
+  /*
+    Max share of poster height for the wormhole stage (~1005/1200 at reference 27×40 layout).
+    Keeps mobile proportionally aligned with desktop instead of filling almost the whole sheet.
+  */
+  --poster-stage-max-h-frac: 0.8375;
   --poster-width-in: 27in;
   --poster-height-in: 40in;
   --poster-page-pad: clamp(28px, 6vmin, 96px);
@@ -106,13 +111,18 @@ body {
 .poster__stage {
   position: absolute;
   left: 50%;
-  bottom: calc(50% - var(--poster-stage-h-base) / 2);
+  /* Set from JS: --poster-stage-bottom = posterHeight * (0.5 - (stage-h-base/2)/refPosterH) so small sheets never get negative bottom */
+  bottom: var(--poster-stage-bottom, calc(50% - var(--poster-stage-h-base) / 2));
   transform: translateX(-50%);
   z-index: 1;
   overflow: visible;
   width: min(var(--poster-stage-w), 82.5%);
   max-width: calc(100% - 2 * clamp(8px, 2.5%, 24px));
-  height: min(var(--poster-stage-h), calc(100% - 2 * clamp(12px, 3%, 32px)));
+  height: min(
+    var(--poster-stage-h),
+    calc(var(--poster-stage-max-h-frac) * 100%),
+    calc(100% - 2 * clamp(12px, 3%, 32px))
+  );
   box-sizing: border-box;
 }
 
@@ -184,16 +194,6 @@ black-hole .js-canvas-front {
     --poster-page-pad: clamp(10px, 3.5vw, 20px);
     --poster-page-pad-x: clamp(10px, 3.5vw, 20px);
     --poster-page-pad-y: clamp(12px, 4vw, 28px);
-  }
-
-  .poster__stage {
-    width: min(var(--poster-stage-w), 88%);
-    max-width: calc(100% - 2 * clamp(6px, 2vw, 14px));
-  }
-
-  .astronaut-float__img {
-    width: clamp(64px, 32%, 180px);
-    max-height: min(46%, 320px);
   }
 }
 

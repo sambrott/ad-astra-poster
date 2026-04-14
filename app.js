@@ -32,6 +32,10 @@ const ASTRONAUT_END_EXTRA_DOWN_PX = 22;
 /** How much scale drops over u=0→1 (higher = smaller at end). Was 0.44. */
 const ASTRONAUT_SCALE_SHRINK = 0.52;
 
+/** Reference poster height (px) for 27×40 at ~810px width — used to scale stage offset so layout matches desktop at any size. */
+const REF_POSTER_HEIGHT_PX = 1200;
+const STAGE_HALF_OFFSET_BASE_PX = 242.5; /* --poster-stage-h-base / 2 */
+
 /** Top “full phrase” band: fewer labels, longer runs only (less clutter). */
 const TOP_FULL_FRAC = 0.028;
 const TOP_FULL_MIN = 28;
@@ -64,11 +68,19 @@ class BlackHole extends HTMLElement {
     await document.fonts.ready;
     this.resize();
     window.addEventListener("resize", this.onResize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", this.onResize);
+      window.visualViewport.addEventListener("scroll", this.onResize);
+    }
     requestAnimationFrame(this.tick);
   }
 
   disconnectedCallback() {
     window.removeEventListener("resize", this.onResize);
+    if (window.visualViewport) {
+      window.visualViewport.removeEventListener("resize", this.onResize);
+      window.visualViewport.removeEventListener("scroll", this.onResize);
+    }
     if (this.resizeTimer) clearTimeout(this.resizeTimer);
   }
 
@@ -82,6 +94,13 @@ class BlackHole extends HTMLElement {
     const prevStart = this.astronautDescentStartMs;
     const preservedElapsed = prevStart != null ? now - prevStart : 0;
     const descentWasComplete = preservedElapsed >= ASTRONAUT_CYCLE_MS;
+
+    const poster = this.closest(".poster");
+    if (poster) {
+      const ph = poster.getBoundingClientRect().height;
+      const bottomPx = ph * (0.5 - STAGE_HALF_OFFSET_BASE_PX / REF_POSTER_HEIGHT_PX);
+      poster.style.setProperty("--poster-stage-bottom", `${Math.max(0, bottomPx)}px`);
+    }
 
     const rect = this.getBoundingClientRect();
     const dpi = Math.min(MAX_DPR, window.devicePixelRatio || 1);
@@ -133,7 +152,9 @@ class BlackHole extends HTMLElement {
     const pct = parseFloat(raw);
     const frac = Number.isFinite(pct) ? pct / 100 : 0.18;
     const directorTopFromPosterTop = pr.height * (1 - frac);
-    const directorTopInStage = directorTopFromPosterTop - (sr.top - pr.top);
+    let directorTopInStage = directorTopFromPosterTop - (sr.top - pr.top);
+    /* Small sheets: director line can sit below the stage box; clamp so translateY stays valid */
+    directorTopInStage = Math.min(Math.max(0, directorTopInStage), h - 2);
     const img = el.querySelector("img");
     const imgH = img?.offsetHeight || h * 0.22;
     const scaleAtEnd = (1 - ASTRONAUT_SCALE_SHRINK) * ASTRONAUT_SCALE_MAX;
