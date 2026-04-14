@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Ad Astra — poster (loss of signal)</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -14,12 +17,6 @@
   </head>
   <body>
     <div class="poster-page">
-      <div class="export-video-bar" aria-label="Video export">
-        <button type="button" id="export-video-btn" class="export-video-btn">
-          Export poster video (poster only)
-        </button>
-        <p id="export-video-status" class="export-video-status" role="status"></p>
-      </div>
       <div class="poster-frame">
         <!-- 27×40 in layout (8100×12000 JPEG); scales down if the viewport is smaller -->
         <figure class="poster" aria-label="Ad Astra one-sheet">
@@ -48,6 +45,5 @@
       </div>
     </div>
     <script type="module" src="app.js"></script>
-    <script type="module" src="export-video.js"></script>
   </body>
 </html>

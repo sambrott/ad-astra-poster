@@ -545,12 +545,6 @@ class BlackHole extends HTMLElement {
 
     requestAnimationFrame(this.tick);
   }
-
-  /** Restart descent + idle from t=0 (used by export-video.js). */
-  resetDescentForExport() {
-    this.astronautDescentStartMs = performance.now();
-    this.astronautIdleStartMs = null;
-  }
 }
 
 customElements.define("black-hole", BlackHole);
