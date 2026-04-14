@@ -40,7 +40,10 @@ const STAGE_HALF_OFFSET_BASE_PX = 242.5; /* --poster-stage-h-base / 2 */
 const ASTRONAUT_MOBILE_EXTRA_DOWN_PX = 36;
 
 /** Additional downward nudge at end pose on desktop only (px). */
-const ASTRONAUT_END_DESKTOP_LOWER_PX = 140;
+const ASTRONAUT_END_DESKTOP_LOWER_PX = 420;
+
+/** Desktop wormhole text size multiplier (1 = legacy; >1 increases glyph size). */
+const DESKTOP_PARTICLE_TYPE_SCALE = 1.22;
 
 /** Additional downward nudge at end pose on mobile only (px). */
 const ASTRONAUT_END_MOBILE_LOWER_PX = 5;
@@ -468,16 +471,16 @@ class BlackHole extends HTMLElement {
 
     const topY = this.topY;
     const compact = this._layoutHints?.compact ?? false;
-    const typeScale = compact ? (this._layoutHints?.particleTypeScale ?? 0.77) : 1;
+    const typeScale = compact
+      ? (this._layoutHints?.particleTypeScale ?? 0.77)
+      : DESKTOP_PARTICLE_TYPE_SCALE;
     for (let i = 0; i < this.particles.length; i++) {
       const dot = this.particles[i];
       if (!discPredicate(dot.d.discIndex)) continue;
       const alpha = dot.d.a * dot.o;
       if (alpha < 0.02) continue;
       const depth = dot.d.sx * dot.d.sy;
-      const fs = compact
-        ? Math.max(4, Math.round((5 + depth * 26) * typeScale))
-        : Math.round(5 + depth * 26);
+      const fs = Math.max(4, Math.round((5 + depth * 26) * typeScale));
       const bin = Math.min(bins.length - 1, Math.max(0, fs - 5));
       const angle = dot.a + Math.PI * 2 * dot.p;
       const px = dot.d.x + Math.cos(angle) * dot.d.w;
@@ -497,12 +500,8 @@ class BlackHole extends HTMLElement {
     for (let i = 0; i < bins.length; i++) {
       const batch = bins[i];
       if (!batch.length) continue;
-      if (compact) {
-        const fontSize = Math.max(4, Math.round((i + 5) * typeScale));
-        ctx.font = FONT_PREFIX + fontSize + FONT_SUFFIX;
-      } else {
-        ctx.font = FONT_PREFIX + (i + 5) + FONT_SUFFIX;
-      }
+      const fontSize = Math.max(4, Math.round((i + 5) * typeScale));
+      ctx.font = FONT_PREFIX + fontSize + FONT_SUFFIX;
       for (let j = 0; j < batch.length; j++) {
         const item = batch[j];
         ctx.globalAlpha = item.a;
@@ -529,13 +528,6 @@ class BlackHole extends HTMLElement {
     }
     const endScale = (1 - ASTRONAUT_SCALE_SHRINK) * ASTRONAUT_SCALE_MAX;
     const startScale = ASTRONAUT_SCALE_MAX * ASTRONAUT_SCALE_START_FACTOR;
-
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      el.style.transform = `translate3d(0, ${y1}px, 0) scale(${endScale})`;
-      el.style.opacity = "1";
-      el.style.visibility = "visible";
-      return;
-    }
 
     if (this.astronautDescentStartMs == null) {
       this.astronautDescentStartMs = performance.now();
