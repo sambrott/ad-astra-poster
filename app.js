@@ -36,9 +36,15 @@ const ASTRONAUT_SCALE_SHRINK = 0.52;
 const REF_POSTER_HEIGHT_PX = 1200;
 const STAGE_HALF_OFFSET_BASE_PX = 242.5; /* --poster-stage-h-base / 2 */
 
+/** Extra nudge downward at end pose on narrow viewports (px), added to ASTRONAUT_END_EXTRA_DOWN_PX. */
+const ASTRONAUT_MOBILE_EXTRA_DOWN_PX = 36;
+
 /** Top “full phrase” band: fewer labels, longer runs only (less clutter). */
 const TOP_FULL_FRAC = 0.028;
 const TOP_FULL_MIN = 28;
+/** Narrow viewports: fewer full-phrase particles in the top band, wider band so glyphs spread out. */
+const TOP_FULL_FRAC_COMPACT = 0.014;
+const TOP_FULL_MIN_COMPACT = 16;
 const TOP_LEN_MIN = 8;
 const TOP_LEN_MAX = 14;
 
@@ -89,6 +95,24 @@ class BlackHole extends HTMLElement {
     this.resizeTimer = setTimeout(() => this.resize(), 100);
   }
 
+  /** Typography and astronaut tweaks when the wormhole canvas is narrow (typical phone). */
+  layoutHints() {
+    const w = this.render?.width ?? 800;
+    const compact = w < 640;
+    return {
+      compact,
+      /** Multiply particle font sizes (~0.65–0.75) for legibility on small screens */
+      particleTypeScale: compact ? 0.7 : 1,
+      /** Larger fraction = taller “top-only full phrase” zone → same count spreads thinner */
+      topYFrac: compact ? 0.44 : 0.36,
+      topFullFrac: compact ? TOP_FULL_FRAC_COMPACT : TOP_FULL_FRAC,
+      topFullMin: compact ? TOP_FULL_MIN_COMPACT : TOP_FULL_MIN,
+      astronautEndExtraDown: ASTRONAUT_END_EXTRA_DOWN_PX + (compact ? ASTRONAUT_MOBILE_EXTRA_DOWN_PX : 0),
+      /** When director line maps below the stage, cap how high we treat it (higher = astronaut ends lower) */
+      directorStageCapFrac: compact ? 0.96 : 0.88,
+    };
+  }
+
   resize() {
     const now = performance.now();
     const prevStart = this.astronautDescentStartMs;
@@ -113,6 +137,7 @@ class BlackHole extends HTMLElement {
       w: rect.width,
       h: rect.height,
     };
+    this._layoutHints = this.layoutHints();
     const cw = Math.max(1, Math.floor(rect.width * dpi));
     const ch = Math.max(1, Math.floor(rect.height * dpi));
     this.canvasBack.width = cw;
@@ -153,8 +178,10 @@ class BlackHole extends HTMLElement {
     const frac = Number.isFinite(pct) ? pct / 100 : 0.18;
     const directorTopFromPosterTop = pr.height * (1 - frac);
     let directorTopInStage = directorTopFromPosterTop - (sr.top - pr.top);
-    /* Small sheets: director line can sit below the stage box; clamp so translateY stays valid */
-    directorTopInStage = Math.min(Math.max(0, directorTopInStage), h - 2);
+    directorTopInStage = Math.max(0, directorTopInStage);
+    const hints = this._layoutHints ?? this.layoutHints();
+    const cap = h * hints.directorStageCapFrac;
+    if (directorTopInStage > cap) directorTopInStage = cap;
     const img = el.querySelector("img");
     const imgH = img?.offsetHeight || h * 0.22;
     const scaleAtEnd = (1 - ASTRONAUT_SCALE_SHRINK) * ASTRONAUT_SCALE_MAX;
@@ -164,7 +191,7 @@ class BlackHole extends HTMLElement {
       ASTRONAUT_GAP_ABOVE_DIRECTOR_PX -
       halfImgScaled -
       h / 2 +
-      ASTRONAUT_END_EXTRA_DOWN_PX;
+      hints.astronautEndExtraDown;
   }
 
   makeDiscs() {
@@ -240,9 +267,10 @@ class BlackHole extends HTMLElement {
 
   makeParticles() {
     const { w, h } = this.render;
+    const hints = this._layoutHints ?? this.layoutHints();
     const tape = PHRASE.length;
-    const topY = h * 0.36;
-    const maxTop = Math.max(TOP_FULL_MIN, Math.floor(PARTICLE_COUNT * TOP_FULL_FRAC));
+    const topY = h * hints.topYFrac;
+    const maxTop = Math.max(hints.topFullMin, Math.floor(PARTICLE_COUNT * hints.topFullFrac));
     this.fullWordTarget = maxTop;
     this.topY = topY;
     const particles = [];
@@ -427,13 +455,14 @@ class BlackHole extends HTMLElement {
     for (let i = 0; i < bins.length; i++) bins[i].length = 0;
 
     const topY = this.topY;
+    const typeScale = this._layoutHints?.particleTypeScale ?? 1;
     for (let i = 0; i < this.particles.length; i++) {
       const dot = this.particles[i];
       if (!discPredicate(dot.d.discIndex)) continue;
       const alpha = dot.d.a * dot.o;
       if (alpha < 0.02) continue;
       const depth = dot.d.sx * dot.d.sy;
-      const fs = Math.round(5 + depth * 26);
+      const fs = Math.max(4, Math.round((5 + depth * 26) * typeScale));
       const bin = Math.min(bins.length - 1, Math.max(0, fs - 5));
       const angle = dot.a + Math.PI * 2 * dot.p;
       const px = dot.d.x + Math.cos(angle) * dot.d.w;
@@ -453,7 +482,8 @@ class BlackHole extends HTMLElement {
     for (let i = 0; i < bins.length; i++) {
       const batch = bins[i];
       if (!batch.length) continue;
-      ctx.font = FONT_PREFIX + (i + 5) + FONT_SUFFIX;
+      const fontSize = Math.max(4, Math.round((i + 5) * typeScale));
+      ctx.font = FONT_PREFIX + fontSize + FONT_SUFFIX;
       for (let j = 0; j < batch.length; j++) {
         const item = batch[j];
         ctx.globalAlpha = item.a;
