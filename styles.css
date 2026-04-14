@@ -204,13 +204,13 @@ black-hole .js-canvas-front {
     --poster-page-pad-y: clamp(12px, 4vw, 28px);
   }
 
-  /* Move box down 10% of poster height; +15px bottom inset; height −30px (15px inset top & bottom). */
+  /* Move box down 10% of poster height; trim 15px from bottom edge only (shorter box). */
   .poster__stage {
     bottom: max(
       0px,
       calc(var(--poster-stage-bottom, calc(50% - var(--poster-stage-h-base) / 2)) - 10% + 15px)
     );
-    height: max(0px, calc(var(--stage-h) - 30px));
+    height: max(0px, calc(var(--stage-h) - 15px));
   }
 }
 

@@ -39,6 +39,12 @@ const STAGE_HALF_OFFSET_BASE_PX = 242.5; /* --poster-stage-h-base / 2 */
 /** Extra nudge downward at end pose on narrow viewports (px), added to ASTRONAUT_END_EXTRA_DOWN_PX. */
 const ASTRONAUT_MOBILE_EXTRA_DOWN_PX = 36;
 
+/** Additional downward nudge at end pose on desktop only (px). */
+const ASTRONAUT_END_DESKTOP_LOWER_PX = 140;
+
+/** Additional downward nudge at end pose on mobile only (px). */
+const ASTRONAUT_END_MOBILE_LOWER_PX = 5;
+
 /** Top “full phrase” band: fewer labels, longer runs only (less clutter). */
 const TOP_FULL_FRAC = 0.028;
 const TOP_FULL_MIN = 28;
@@ -192,9 +198,10 @@ class BlackHole extends HTMLElement {
       halfImgScaled -
       h / 2 +
       hints.astronautEndExtraDown;
-    /* Mobile: shift end pose up by 5% of stage height (smaller translateY). */
     if (hints.compact) {
-      yEnd -= h * 0.05;
+      yEnd += ASTRONAUT_END_MOBILE_LOWER_PX;
+    } else {
+      yEnd += ASTRONAUT_END_DESKTOP_LOWER_PX;
     }
     this.astronautTranslateYEnd = yEnd;
   }
