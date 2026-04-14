@@ -101,8 +101,8 @@ class BlackHole extends HTMLElement {
     const compact = w < 640;
     return {
       compact,
-      /** Multiply particle font sizes (~0.65–0.75) for legibility on small screens */
-      particleTypeScale: compact ? 0.7 : 1,
+      /** Mobile only: was 0.7; +10% ⇒ 0.77. Desktop uses unscaled fonts in drawParticles. */
+      particleTypeScale: compact ? 0.77 : 1,
       /** Larger fraction = taller “top-only full phrase” zone → same count spreads thinner */
       topYFrac: compact ? 0.44 : 0.36,
       topFullFrac: compact ? TOP_FULL_FRAC_COMPACT : TOP_FULL_FRAC,
@@ -186,12 +186,17 @@ class BlackHole extends HTMLElement {
     const imgH = img?.offsetHeight || h * 0.22;
     const scaleAtEnd = (1 - ASTRONAUT_SCALE_SHRINK) * ASTRONAUT_SCALE_MAX;
     const halfImgScaled = (imgH * scaleAtEnd) / 2;
-    this.astronautTranslateYEnd =
+    let yEnd =
       directorTopInStage -
       ASTRONAUT_GAP_ABOVE_DIRECTOR_PX -
       halfImgScaled -
       h / 2 +
       hints.astronautEndExtraDown;
+    /* Mobile: shift end pose up by 5% of stage height (smaller translateY). */
+    if (hints.compact) {
+      yEnd -= h * 0.05;
+    }
+    this.astronautTranslateYEnd = yEnd;
   }
 
   makeDiscs() {
@@ -455,14 +460,17 @@ class BlackHole extends HTMLElement {
     for (let i = 0; i < bins.length; i++) bins[i].length = 0;
 
     const topY = this.topY;
-    const typeScale = this._layoutHints?.particleTypeScale ?? 1;
+    const compact = this._layoutHints?.compact ?? false;
+    const typeScale = compact ? (this._layoutHints?.particleTypeScale ?? 0.77) : 1;
     for (let i = 0; i < this.particles.length; i++) {
       const dot = this.particles[i];
       if (!discPredicate(dot.d.discIndex)) continue;
       const alpha = dot.d.a * dot.o;
       if (alpha < 0.02) continue;
       const depth = dot.d.sx * dot.d.sy;
-      const fs = Math.max(4, Math.round((5 + depth * 26) * typeScale));
+      const fs = compact
+        ? Math.max(4, Math.round((5 + depth * 26) * typeScale))
+        : Math.round(5 + depth * 26);
       const bin = Math.min(bins.length - 1, Math.max(0, fs - 5));
       const angle = dot.a + Math.PI * 2 * dot.p;
       const px = dot.d.x + Math.cos(angle) * dot.d.w;
@@ -482,8 +490,12 @@ class BlackHole extends HTMLElement {
     for (let i = 0; i < bins.length; i++) {
       const batch = bins[i];
       if (!batch.length) continue;
-      const fontSize = Math.max(4, Math.round((i + 5) * typeScale));
-      ctx.font = FONT_PREFIX + fontSize + FONT_SUFFIX;
+      if (compact) {
+        const fontSize = Math.max(4, Math.round((i + 5) * typeScale));
+        ctx.font = FONT_PREFIX + fontSize + FONT_SUFFIX;
+      } else {
+        ctx.font = FONT_PREFIX + (i + 5) + FONT_SUFFIX;
+      }
       for (let j = 0; j < batch.length; j++) {
         const item = batch[j];
         ctx.globalAlpha = item.a;
