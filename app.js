@@ -47,8 +47,8 @@ const TYPE_RATIO_MOBILE = 0.77;
 const TYPE_DESKTOP_RATIO_REF = 1.22;
 /** Extra multiplier on mobile wormhole type (smaller on phones). */
 const MOBILE_TYPE_EXTRA_FACTOR = 0.88;
-/** Extra px added to astronaut end translateY on narrow viewports. */
-const ASTRONAUT_MOBILE_END_NUDGE_PX = 14;
+/** Narrow viewports only: subtract from end translateY so the astronaut sits higher (px). */
+const ASTRONAUT_MOBILE_LIFT_PX = 48;
 /** Desktop astronaut end nudge (px), added after geometry + ASTRONAUT_END_EXTRA_DOWN_PX. */
 const ASTRONAUT_DESKTOP_NUDGE_PX = 0;
 
@@ -111,7 +111,7 @@ class BlackHole extends HTMLElement {
   }
 
   /**
-   * Narrow viewports: smaller wormhole type + slight astronaut end nudge; stage CSS unchanged.
+   * Narrow viewports: smaller wormhole type; stage CSS unchanged.
    */
   layoutHints() {
     const compact =
@@ -207,7 +207,7 @@ class BlackHole extends HTMLElement {
       h / 2 +
       hints.astronautEndExtraDown;
     yEnd += ASTRONAUT_DESKTOP_NUDGE_PX;
-    if (hints.compact) yEnd += ASTRONAUT_MOBILE_END_NUDGE_PX;
+    if (hints.compact) yEnd -= ASTRONAUT_MOBILE_LIFT_PX;
     this.astronautTranslateYEnd = yEnd;
   }
 
