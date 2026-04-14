@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Ad Astra 27×40 poster layout reference (matches CSS in styles.css).
+  Units: viewBox 0 0 270 400 → same proportions as 8100×12000px JPEG.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 270 400" width="270" height="400">
+  <title>Ad Astra poster — animation safe zone</title>
+  <rect width="270" height="400" fill="#0a0a0a" stroke="#333" stroke-width="0.5"/>
+  <!-- Top band (~35%): LOSS OF SIGNAL / header text on full poster -->
+  <rect x="0" y="0" width="270" height="140" fill="rgba(80,80,120,0.15)" stroke="#668" stroke-dasharray="3 2"/>
+  <text x="135" y="12" text-anchor="middle" fill="#888" font-family="system-ui,sans-serif" font-size="7">top text band (~35%)</text>
+  <!-- Bottom band (~22%): credits + “AD ASTRA” title -->
+  <rect x="0" y="312" width="270" height="88" fill="rgba(80,120,80,0.15)" stroke="#686" stroke-dasharray="3 2"/>
+  <text x="135" y="320" text-anchor="middle" fill="#888" font-size="7">billing + title (~22%)</text>
+  <!-- Animation zone: matches .poster__stage insets 35% / 22% / 6% -->
+  <rect x="16" y="140" width="238" height="172" fill="rgba(0,200,255,0.08)" stroke="#0cf" stroke-width="0.8"/>
+  <text x="135" y="230" text-anchor="middle" fill="#0cf" font-size="8">wormhole + astronaut</text>
+</svg>

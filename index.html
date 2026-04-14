@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ad Astra — poster (loss of signal)</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="poster-page">
+      <div class="export-video-bar" aria-label="Video export">
+        <button type="button" id="export-video-btn" class="export-video-btn">
+          Export poster video (poster only)
+        </button>
+        <p id="export-video-status" class="export-video-status" role="status"></p>
+      </div>
+      <div class="poster-frame">
+        <!-- 27×40 in layout (8100×12000 JPEG); scales down if the viewport is smaller -->
+        <figure class="poster" aria-label="Ad Astra one-sheet">
+          <div class="poster__bg" role="presentation"></div>
+          <div class="poster__stage">
+            <black-hole>
+              <canvas class="js-canvas-back" aria-hidden="true"></canvas>
+              <canvas class="js-canvas-front" aria-hidden="true"></canvas>
+            </black-hole>
+            <div class="astronaut-float" aria-hidden="true">
+              <div class="astronaut-float__depth">
+                <img
+                  class="astronaut-float__img"
+                  src="images/astronaut.png"
+                  alt=""
+                  decoding="async"
+                  fetchpriority="high"
+                  width="378"
+                  height="426"
+                  onerror="this.onerror=null;this.src='images/astronaut.svg'"
+                />
+              </div>
+            </div>
+          </div>
+        </figure>
+      </div>
+    </div>
+    <script type="module" src="app.js"></script>
+    <script type="module" src="export-video.js"></script>
+  </body>
+</html>
