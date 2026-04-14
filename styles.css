@@ -7,6 +7,17 @@
   center unchanged; top lowered 60px vs prior 775px-tall box ⇒ height 715px.
 */
 :root {
+  /* Live tuning — animation box (.poster__stage) in/out; see layout tuner + app.js export */
+  --tune-stage-x: 2;
+  --tune-stage-top: 1.84;
+  --tune-stage-bottom: 0.5;
+  --tune-astronaut-desktop: 0;
+  --tune-type-desktop: 1.18;
+  --poster-stage-gutter-x: calc(clamp(8px, 2.5%, 24px) * var(--tune-stage-x));
+  --poster-stage-gutter-top: calc(clamp(8px, 2.5%, 24px) * var(--tune-stage-top));
+  /* Average of top/bottom for the stage-h inner cap (wormhole height budget) */
+  --tune-stage-y-mid: calc((var(--tune-stage-top) + var(--tune-stage-bottom)) / 2);
+
   --poster-stage-w: 670px;
   --poster-stage-h-base: 485px;
   --poster-stage-h-extra: 290px;
@@ -105,32 +116,36 @@ body {
 }
 
 /*
-  Wormhole + astronaut — same width; bottom + translateX unchanged.
-  height = base + extra − 60px (top edge 60px lower than 775px version).
+  Wormhole + astronaut — same width; translateX unchanged.
+  top = gutter; bottom from JS; height fills the gap (capped by max-height) so bottom is not ignored.
 */
 .poster__stage {
   position: absolute;
   left: 50%;
-  /* Set from JS: --poster-stage-bottom = posterHeight * (0.5 - (stage-h-base/2)/refPosterH) so small sheets never get negative bottom */
+  /* Top inset; bottom offset from JS + --tune-stage-bottom (see app.js resize) */
+  top: var(--poster-stage-gutter-top);
+  /* Set from JS: --poster-stage-bottom = posterHeight * (0.5 - (stage-h-base/2)/refPosterH) */
   bottom: var(--poster-stage-bottom, calc(50% - var(--poster-stage-h-base) / 2));
   transform: translateX(-50%);
   z-index: 1;
   overflow: visible;
   width: min(var(--poster-stage-w), 82.5%);
-  max-width: calc(100% - 2 * clamp(8px, 2.5%, 24px));
+  max-width: calc(100% - 2 * var(--poster-stage-gutter-x));
   --stage-h: min(
     var(--poster-stage-h),
     calc(var(--poster-stage-max-h-frac) * 100%),
-    calc(100% - 2 * clamp(12px, 3%, 32px))
+    calc(100% - 2 * calc(clamp(12px, 3%, 32px) * var(--tune-stage-y-mid)))
   );
-  height: var(--stage-h);
+  /* top + bottom + height:auto respects JS bottom; max-height caps wormhole size */
+  height: auto;
+  max-height: calc(var(--stage-h) - var(--poster-stage-gutter-top));
   box-sizing: border-box;
 }
 
-/* Extend wormhole vertically on desktop only */
+/* Extend wormhole vertically on desktop only (+80px vs base cap: historical +50px + 30px lower) */
 @media (min-width: 641px) {
   .poster__stage {
-    height: calc(var(--stage-h) + 50px);
+    max-height: calc(var(--stage-h) + 80px - var(--poster-stage-gutter-top));
   }
 }
 
@@ -197,20 +212,16 @@ black-hole .js-canvas-front {
   background: transparent;
 }
 
+/*
+  Narrow viewports: keep the same poster padding and stage geometry as desktop so the
+  animation box matches (same bottom source + same +80px max-height cap as min-width: 641px).
+*/
 @media (max-width: 640px) {
-  :root {
-    --poster-page-pad: clamp(10px, 3.5vw, 20px);
-    --poster-page-pad-x: clamp(10px, 3.5vw, 20px);
-    --poster-page-pad-y: clamp(12px, 4vw, 28px);
-  }
-
-  /* Move box down 10% of poster height; trim 15px from bottom edge only (shorter box). */
   .poster__stage {
-    bottom: max(
-      0px,
-      calc(var(--poster-stage-bottom, calc(50% - var(--poster-stage-h-base) / 2)) - 10% + 15px)
-    );
-    height: max(0px, calc(var(--stage-h) - 15px));
+    /* Pull the box inward 30px from poster top + 30px from poster bottom vs desktop tuning */
+    top: calc(var(--poster-stage-gutter-top) + 30px);
+    bottom: calc(var(--poster-stage-bottom, calc(50% - var(--poster-stage-h-base) / 2)) + 30px);
+    max-height: calc(var(--stage-h) + 80px - var(--poster-stage-gutter-top));
   }
 }
 
@@ -219,4 +230,128 @@ black-hole .js-canvas-front {
     opacity: 1 !important;
     visibility: visible !important;
   }
+}
+
+/* —— Live layout tuner (desktop sliders; mobile mirrors via app.js ratios) —— */
+.layout-tuner {
+  position: fixed;
+  z-index: 10000;
+  right: max(12px, env(safe-area-inset-right, 0px));
+  bottom: max(12px, env(safe-area-inset-bottom, 0px));
+  width: min(380px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: rgba(18, 18, 22, 0.94);
+  color: #e8e8ec;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  line-height: 1.35;
+  box-shadow:
+    0 12px 40px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06);
+  pointer-events: auto;
+}
+
+.layout-tuner__title {
+  margin: 0 0 10px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #9898a8;
+}
+
+.layout-tuner__field {
+  margin-bottom: 12px;
+}
+
+.layout-tuner__field:last-child {
+  margin-bottom: 0;
+}
+
+.layout-tuner__label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.layout-tuner__value {
+  font-variant-numeric: tabular-nums;
+  color: #a8d4ff;
+}
+
+.layout-tuner input[type="range"] {
+  width: 100%;
+  margin: 4px 0 2px;
+  accent-color: #6ab0ff;
+}
+
+.layout-tuner__mirror {
+  margin: 0;
+  font-size: 10px;
+  color: #7a7a8c;
+}
+
+.layout-tuner__mirror strong {
+  color: #b8c4d8;
+  font-weight: 500;
+}
+
+.layout-tuner__export-block {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.layout-tuner__export-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.layout-tuner__export-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: #9898a8;
+}
+
+.layout-tuner__copy {
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: #3a7bc8;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.layout-tuner__copy:hover {
+  background: #4a8bd8;
+}
+
+.layout-tuner__copy:focus-visible {
+  outline: 2px solid #8ec0ff;
+  outline-offset: 2px;
+}
+
+.layout-tuner__export {
+  width: 100%;
+  min-height: 120px;
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.35);
+  color: #c8d0e0;
+  font-family: ui-monospace, "Cascadia Code", "IBM Plex Mono", monospace;
+  font-size: 10px;
+  line-height: 1.4;
+  resize: vertical;
 }

@@ -36,24 +36,92 @@ const ASTRONAUT_SCALE_SHRINK = 0.52;
 const REF_POSTER_HEIGHT_PX = 1200;
 const STAGE_HALF_OFFSET_BASE_PX = 242.5; /* --poster-stage-h-base / 2 */
 
-/** Extra nudge downward at end pose on narrow viewports (px), added to ASTRONAUT_END_EXTRA_DOWN_PX. */
-const ASTRONAUT_MOBILE_EXTRA_DOWN_PX = 36;
+/**
+ * Defaults for live tuning (CSS :root + sliders). Shipped from user handoff JSON.
+ * Mobile scales use fixed refs (below) so desktop can be 0 without breaking math.
+ */
+const TUNE_DEFAULTS = {
+  stageX: 2,
+  stageTop: 1.84,
+  stageBottom: 0.5,
+  astronautDesktop: 0,
+  astronautMobile: 5,
+  typeDesktop: 1.18,
+  typeMobile: 0.77,
+};
 
-/** Additional downward nudge at end pose on desktop only (px). */
-const ASTRONAUT_END_DESKTOP_LOWER_PX = 420;
+/** Reference desktop astronaut nudge (px) for mobile ratio — not the live slider default. */
+const ASTRONAUT_DESKTOP_RATIO_REF = 920;
+/** Reference desktop type scale for mobile ratio — not the live slider default. */
+const TYPE_DESKTOP_RATIO_REF = 1.22;
 
-/** Desktop wormhole text size multiplier (1 = legacy; >1 increases glyph size). */
-const DESKTOP_PARTICLE_TYPE_SCALE = 1.22;
+/** Scales extra distance from poster bottom to stage bottom when --tune-stage-bottom changes. */
+const TUNE_STAGE_Y_BOTTOM_FRAC = 0.08;
 
-/** Additional downward nudge at end pose on mobile only (px). */
-const ASTRONAUT_END_MOBILE_LOWER_PX = 5;
+function readCssVar(name, fallback) {
+  const el = document.documentElement;
+  const inline = el.style.getPropertyValue(name).trim();
+  if (inline) {
+    const ni = parseFloat(inline);
+    if (Number.isFinite(ni)) return ni;
+  }
+  const v = getComputedStyle(el).getPropertyValue(name).trim();
+  const n = parseFloat(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getTuning() {
+  const parse = (name, fallback) => readCssVar(name, fallback);
+  const astronautDesktop = parse("--tune-astronaut-desktop", TUNE_DEFAULTS.astronautDesktop);
+  const typeDesktop = parse("--tune-type-desktop", TUNE_DEFAULTS.typeDesktop);
+  const stageX = parse("--tune-stage-x", TUNE_DEFAULTS.stageX);
+  const stageTop = parse("--tune-stage-top", TUNE_DEFAULTS.stageTop);
+  const stageBottom = parse("--tune-stage-bottom", TUNE_DEFAULTS.stageBottom);
+  return {
+    astronautDesktopLower: astronautDesktop,
+    astronautMobileLower:
+      TUNE_DEFAULTS.astronautMobile * (astronautDesktop / ASTRONAUT_DESKTOP_RATIO_REF),
+    typeDesktop,
+    typeMobile: TUNE_DEFAULTS.typeMobile * (typeDesktop / TYPE_DESKTOP_RATIO_REF),
+    stageX,
+    stageTop,
+    stageBottom,
+  };
+}
+
+function buildLayoutExport() {
+  const parse = (name, fallback) => readCssVar(name, fallback);
+  const tune = getTuning();
+  return {
+    version: 2,
+    description:
+      "Ad Astra poster — copy for handoff. Stage + wormhole layout match desktop on all viewports; export mobileMirroring documents legacy ratio refs for type/astronaut if you split breakpoints again.",
+    cssVariablesOnRoot: {
+      "--tune-stage-x": parse("--tune-stage-x", TUNE_DEFAULTS.stageX),
+      "--tune-stage-top": parse("--tune-stage-top", TUNE_DEFAULTS.stageTop),
+      "--tune-stage-bottom": parse("--tune-stage-bottom", TUNE_DEFAULTS.stageBottom),
+      "--tune-astronaut-desktop": parse("--tune-astronaut-desktop", TUNE_DEFAULTS.astronautDesktop),
+      "--tune-type-desktop": parse("--tune-type-desktop", TUNE_DEFAULTS.typeDesktop),
+    },
+    jsResizeBottom: {
+      note:
+        "resize() adds (tuneStageBottom - 1) * posterHeight * TUNE_STAGE_Y_BOTTOM_FRAC to base --poster-stage-bottom; top uses --tune-stage-top in CSS only.",
+      TUNE_STAGE_Y_BOTTOM_FRAC,
+    },
+    mobileMirroring: {
+      note:
+        "Runtime uses desktop type + astronaut nudge everywhere; values below are reference ratios only.",
+      astronautEndNudgePx: tune.astronautMobileLower,
+      astronautRatioVsDesktop: `${TUNE_DEFAULTS.astronautMobile}/${ASTRONAUT_DESKTOP_RATIO_REF}`,
+      typeScale: tune.typeMobile,
+      typeRatioVsDesktop: `${TUNE_DEFAULTS.typeMobile}/${TYPE_DESKTOP_RATIO_REF}`,
+    },
+  };
+}
 
 /** Top “full phrase” band: fewer labels, longer runs only (less clutter). */
 const TOP_FULL_FRAC = 0.028;
 const TOP_FULL_MIN = 28;
-/** Narrow viewports: fewer full-phrase particles in the top band, wider band so glyphs spread out. */
-const TOP_FULL_FRAC_COMPACT = 0.014;
-const TOP_FULL_MIN_COMPACT = 16;
 const TOP_LEN_MIN = 8;
 const TOP_LEN_MAX = 14;
 
@@ -104,21 +172,23 @@ class BlackHole extends HTMLElement {
     this.resizeTimer = setTimeout(() => this.resize(), 100);
   }
 
-  /** Typography and astronaut tweaks when the wormhole canvas is narrow (typical phone). */
+  /**
+   * Wormhole layout matches desktop on all viewports (particles, type scale, astronaut).
+   * `compact` is kept for optional UI/telemetry only — it does not change layout math.
+   */
   layoutHints() {
-    const w = this.render?.width ?? 800;
-    const compact = w < 640;
+    const compact =
+      typeof window !== "undefined" &&
+      window.matchMedia("(max-width: 640px)").matches;
+    const tune = getTuning();
     return {
       compact,
-      /** Mobile only: was 0.7; +10% ⇒ 0.77. Desktop uses unscaled fonts in drawParticles. */
-      particleTypeScale: compact ? 0.77 : 1,
-      /** Larger fraction = taller “top-only full phrase” zone → same count spreads thinner */
-      topYFrac: compact ? 0.44 : 0.36,
-      topFullFrac: compact ? TOP_FULL_FRAC_COMPACT : TOP_FULL_FRAC,
-      topFullMin: compact ? TOP_FULL_MIN_COMPACT : TOP_FULL_MIN,
-      astronautEndExtraDown: ASTRONAUT_END_EXTRA_DOWN_PX + (compact ? ASTRONAUT_MOBILE_EXTRA_DOWN_PX : 0),
-      /** When director line maps below the stage, cap how high we treat it (higher = astronaut ends lower) */
-      directorStageCapFrac: compact ? 0.96 : 0.88,
+      particleTypeScale: tune.typeDesktop,
+      topYFrac: 0.36,
+      topFullFrac: TOP_FULL_FRAC,
+      topFullMin: TOP_FULL_MIN,
+      astronautEndExtraDown: ASTRONAUT_END_EXTRA_DOWN_PX,
+      directorStageCapFrac: 1,
     };
   }
 
@@ -131,8 +201,10 @@ class BlackHole extends HTMLElement {
     const poster = this.closest(".poster");
     if (poster) {
       const ph = poster.getBoundingClientRect().height;
-      const bottomPx = ph * (0.5 - STAGE_HALF_OFFSET_BASE_PX / REF_POSTER_HEIGHT_PX);
-      poster.style.setProperty("--poster-stage-bottom", `${Math.max(0, bottomPx)}px`);
+      const gb = readCssVar("--tune-stage-bottom", TUNE_DEFAULTS.stageBottom);
+      const baseBottom = ph * (0.5 - STAGE_HALF_OFFSET_BASE_PX / REF_POSTER_HEIGHT_PX);
+      const bottomExtra = (gb - 1) * ph * TUNE_STAGE_Y_BOTTOM_FRAC;
+      poster.style.setProperty("--poster-stage-bottom", `${Math.max(0, baseBottom + bottomExtra)}px`);
     }
 
     const rect = this.getBoundingClientRect();
@@ -167,6 +239,14 @@ class BlackHole extends HTMLElement {
     }
   }
 
+  /** Recompute astronaut end pose after --tune-astronaut-desktop changes (no canvas resize). */
+  refreshAstronaut() {
+    this.astronautTranslateYEnd = null;
+    requestAnimationFrame(() => {
+      this.cacheAstronautDescentEnd();
+    });
+  }
+
   /**
    * End of descent: astronaut sits just above the director credit line on the poster JPEG.
    * Uses `--poster-director-from-bottom` on `.poster` (see styles.css).
@@ -189,8 +269,6 @@ class BlackHole extends HTMLElement {
     let directorTopInStage = directorTopFromPosterTop - (sr.top - pr.top);
     directorTopInStage = Math.max(0, directorTopInStage);
     const hints = this._layoutHints ?? this.layoutHints();
-    const cap = h * hints.directorStageCapFrac;
-    if (directorTopInStage > cap) directorTopInStage = cap;
     const img = el.querySelector("img");
     const imgH = img?.offsetHeight || h * 0.22;
     const scaleAtEnd = (1 - ASTRONAUT_SCALE_SHRINK) * ASTRONAUT_SCALE_MAX;
@@ -201,11 +279,8 @@ class BlackHole extends HTMLElement {
       halfImgScaled -
       h / 2 +
       hints.astronautEndExtraDown;
-    if (hints.compact) {
-      yEnd += ASTRONAUT_END_MOBILE_LOWER_PX;
-    } else {
-      yEnd += ASTRONAUT_END_DESKTOP_LOWER_PX;
-    }
+    const tune = getTuning();
+    yEnd += tune.astronautDesktopLower;
     this.astronautTranslateYEnd = yEnd;
   }
 
@@ -470,10 +545,8 @@ class BlackHole extends HTMLElement {
     for (let i = 0; i < bins.length; i++) bins[i].length = 0;
 
     const topY = this.topY;
-    const compact = this._layoutHints?.compact ?? false;
-    const typeScale = compact
-      ? (this._layoutHints?.particleTypeScale ?? 0.77)
-      : DESKTOP_PARTICLE_TYPE_SCALE;
+    const tune = getTuning();
+    const typeScale = tune.typeDesktop;
     for (let i = 0; i < this.particles.length; i++) {
       const dot = this.particles[i];
       if (!discPredicate(dot.d.discIndex)) continue;
@@ -610,3 +683,162 @@ class BlackHole extends HTMLElement {
 }
 
 customElements.define("black-hole", BlackHole);
+
+/** Bump when shipped defaults change so old localStorage does not override handoff values. */
+const TUNE_STORAGE_KEY = "ad-astra-layout-tune-v3";
+const TUNE_STORAGE_KEY_LEGACY = "ad-astra-layout-tune";
+
+function wireLayoutTuner() {
+  const elX = document.getElementById("tune-stage-x");
+  const elTop = document.getElementById("tune-stage-top");
+  const elBot = document.getElementById("tune-stage-bottom");
+  const elA = document.getElementById("tune-astronaut");
+  const elT = document.getElementById("tune-type");
+  const exportTa = document.getElementById("tune-export-json");
+  const copyBtn = document.getElementById("tune-copy-export");
+  if (!elX || !elTop || !elBot || !elA || !elT) return;
+
+  const root = document.documentElement;
+  const outX = document.getElementById("tune-stage-x-val");
+  const outTop = document.getElementById("tune-stage-top-val");
+  const outBot = document.getElementById("tune-stage-bottom-val");
+  const outA = document.getElementById("tune-astronaut-val");
+  const outT = document.getElementById("tune-type-val");
+  const mirrorStage = document.getElementById("tune-stage-mirror");
+  const mirrorA = document.getElementById("tune-astronaut-mirror");
+  const mirrorT = document.getElementById("tune-type-mirror");
+
+  let saved = {};
+  try {
+    saved = JSON.parse(localStorage.getItem(TUNE_STORAGE_KEY) || "{}");
+    if (Object.keys(saved).length === 0) {
+      saved = JSON.parse(localStorage.getItem(TUNE_STORAGE_KEY_LEGACY) || "{}");
+    }
+  } catch {
+    /* ignore */
+  }
+
+  if (Number.isFinite(saved.stageX)) elX.value = String(saved.stageX);
+  if (Number.isFinite(saved.stageTop)) elTop.value = String(saved.stageTop);
+  else if (Number.isFinite(saved.stageY)) elTop.value = String(saved.stageY);
+  if (Number.isFinite(saved.stageBottom)) elBot.value = String(saved.stageBottom);
+  else if (Number.isFinite(saved.stageY)) elBot.value = String(saved.stageY);
+  if (Number.isFinite(saved.astronaut)) elA.value = String(saved.astronaut);
+  if (Number.isFinite(saved.type)) elT.value = String(saved.type);
+
+  const bh = () => document.querySelector("black-hole");
+
+  let prev = { sx: null, st: null, sb: null, a: null };
+
+  function refreshBlackHole() {
+    bh()?.resize?.();
+  }
+
+  function apply() {
+    const sx = parseFloat(elX.value);
+    const st = parseFloat(elTop.value);
+    const sb = parseFloat(elBot.value);
+    const a = parseFloat(elA.value);
+    const t = parseFloat(elT.value);
+
+    root.style.setProperty("--tune-stage-x", String(Number.isFinite(sx) ? sx : TUNE_DEFAULTS.stageX));
+    root.style.setProperty("--tune-stage-top", String(Number.isFinite(st) ? st : TUNE_DEFAULTS.stageTop));
+    root.style.setProperty(
+      "--tune-stage-bottom",
+      String(Number.isFinite(sb) ? sb : TUNE_DEFAULTS.stageBottom)
+    );
+    root.style.setProperty(
+      "--tune-astronaut-desktop",
+      String(Number.isFinite(a) ? a : TUNE_DEFAULTS.astronautDesktop)
+    );
+    root.style.setProperty(
+      "--tune-type-desktop",
+      String(Number.isFinite(t) ? t : TUNE_DEFAULTS.typeDesktop)
+    );
+
+    if (
+      Number.isFinite(sx) &&
+      Number.isFinite(st) &&
+      Number.isFinite(sb) &&
+      Number.isFinite(a) &&
+      Number.isFinite(t)
+    ) {
+      try {
+        localStorage.setItem(
+          TUNE_STORAGE_KEY,
+          JSON.stringify({ stageX: sx, stageTop: st, stageBottom: sb, astronaut: a, type: t })
+        );
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const tune = getTuning();
+    if (outX) outX.textContent = (Number.isFinite(sx) ? sx : TUNE_DEFAULTS.stageX).toFixed(2);
+    if (outTop) outTop.textContent = (Number.isFinite(st) ? st : TUNE_DEFAULTS.stageTop).toFixed(2);
+    if (outBot) outBot.textContent = (Number.isFinite(sb) ? sb : TUNE_DEFAULTS.stageBottom).toFixed(2);
+    if (outA) outA.textContent = String(Math.round(Number.isFinite(a) ? a : TUNE_DEFAULTS.astronautDesktop));
+    if (outT)
+      outT.textContent = (Number.isFinite(t) ? t : TUNE_DEFAULTS.typeDesktop).toFixed(2);
+
+    if (mirrorStage) {
+      mirrorStage.innerHTML =
+        `Stage + wormhole text/astronaut match <strong>desktop</strong> on narrow viewports too (same CSS vars + same JS).`;
+    }
+    if (mirrorA) {
+      mirrorA.innerHTML =
+        `End nudge <strong>${tune.astronautDesktopLower.toFixed(1)} px</strong> (same on all viewports).`;
+    }
+    if (mirrorT) {
+      mirrorT.innerHTML =
+        `Type scale <strong>${tune.typeDesktop.toFixed(3)}</strong> (same on all viewports).`;
+    }
+
+    const stageChanged =
+      sx !== prev.sx ||
+      st !== prev.st ||
+      sb !== prev.sb ||
+      prev.sx === null ||
+      prev.st === null ||
+      prev.sb === null;
+    const astronautChanged = a !== prev.a || prev.a === null;
+
+    if (stageChanged) {
+      refreshBlackHole();
+    } else if (astronautChanged) {
+      bh()?.refreshAstronaut?.();
+    }
+
+    prev = { sx, st, sb, a };
+
+    const payload = buildLayoutExport();
+    if (exportTa) exportTa.value = JSON.stringify(payload, null, 2);
+  }
+
+  if (copyBtn && exportTa) {
+    copyBtn.addEventListener("click", async () => {
+      const text = JSON.stringify(buildLayoutExport(), null, 2);
+      exportTa.value = text;
+      try {
+        await navigator.clipboard.writeText(text);
+        const prevLabel = copyBtn.textContent;
+        copyBtn.textContent = "Copied";
+        setTimeout(() => {
+          copyBtn.textContent = prevLabel;
+        }, 1600);
+      } catch {
+        exportTa.focus();
+        exportTa.select();
+      }
+    });
+  }
+
+  elX.addEventListener("input", apply);
+  elTop.addEventListener("input", apply);
+  elBot.addEventListener("input", apply);
+  elA.addEventListener("input", apply);
+  elT.addEventListener("input", apply);
+  apply();
+}
+
+wireLayoutTuner();
