@@ -122,8 +122,96 @@ function layoutBlackHoleInMount(mount) {
       if (window.matchMedia("(max-width: 768px)").matches) {
         setTimeout(flush, 100);
         setTimeout(flush, 350);
+        setTimeout(flush, 600);
       }
     });
+  });
+}
+
+/** Re-measure every wormhole after scroll / visibility changes (mobile snap deck). */
+function flushAllCarouselBlackHoles() {
+  document.querySelectorAll("#app-carousel black-hole").forEach((el) => {
+    if (typeof el.resize === "function") {
+      el.resize();
+    }
+  });
+  window.dispatchEvent(new Event("resize"));
+}
+
+function layoutFinalCompositionMount() {
+  const mount = document.getElementById("final-composition-mount");
+  if (!mount) return;
+  const flush = () => {
+    mount.querySelectorAll("black-hole").forEach((el) => {
+      if (typeof el.resize === "function") {
+        el.resize();
+      }
+    });
+    window.dispatchEvent(new Event("resize"));
+  };
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      flush();
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        setTimeout(flush, 100);
+        setTimeout(flush, 350);
+        setTimeout(flush, 600);
+      }
+    });
+  });
+}
+
+/**
+ * After scroll-snap settles, canvases often need another resize (off-screen layout was 0×0).
+ * @param {HTMLElement} root
+ */
+function initMobileCarouselLayoutHealing(root) {
+  const viewport = document.getElementById("carousel-viewport");
+  if (!viewport) return;
+
+  const mq = window.matchMedia("(max-width: 768px)");
+  let scrollTimer;
+
+  let healRaf = 0;
+  function heal() {
+    if (!mq.matches) return;
+    cancelAnimationFrame(healRaf);
+    healRaf = requestAnimationFrame(() => {
+      flushAllCarouselBlackHoles();
+    });
+  }
+
+  viewport.addEventListener(
+    "scroll",
+    () => {
+      if (!mq.matches) return;
+      clearTimeout(scrollTimer);
+      scrollTimer = window.setTimeout(heal, 140);
+    },
+    { passive: true }
+  );
+
+  try {
+    viewport.addEventListener("scrollend", heal, { passive: true });
+  } catch {
+    /* scrollend not supported */
+  }
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      if (!mq.matches) return;
+      for (const e of entries) {
+        if (e.isIntersecting && e.intersectionRatio > 0.08) {
+          requestAnimationFrame(heal);
+          break;
+        }
+      }
+    },
+    { root: viewport, threshold: [0, 0.1, 0.25] }
+  );
+
+  root.querySelectorAll("#carousel-track .carousel-slide").forEach((slide) => {
+    io.observe(slide);
   });
 }
 
@@ -150,9 +238,7 @@ function mountFinalComposition() {
   if (!mount || mount.dataset.mounted === "1") return;
   mount.innerHTML = POSTER_LIVE_MARKUP;
   mount.dataset.mounted = "1";
-  requestAnimationFrame(() => {
-    window.dispatchEvent(new Event("resize"));
-  });
+  layoutFinalCompositionMount();
 }
 
 function wireTunerControls() {
@@ -244,7 +330,12 @@ function applySlide(root, index, opts = {}) {
     }
   }
   if (i === 5) {
+    const finalWasMounted =
+      document.getElementById("final-composition-mount")?.dataset.mounted === "1";
     mountFinalComposition();
+    if (finalWasMounted) {
+      layoutFinalCompositionMount();
+    }
   }
 }
 
@@ -614,6 +705,8 @@ function init() {
       slide = n;
     },
   });
+
+  initMobileCarouselLayoutHealing(root);
 
   document.getElementById("carousel-enter")?.addEventListener("click", () => {
     goTo(1);

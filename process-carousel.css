@@ -802,7 +802,8 @@ body {
     height: 100svh;
     max-height: 100dvh;
     max-height: 100svh;
-    touch-action: pan-y;
+    /* pan-y breaks horizontal range sliders + can steal gestures from canvases; snap still works */
+    touch-action: auto;
   }
 
   .carousel-track {
@@ -923,6 +924,16 @@ body {
     align-items: stretch;
   }
 
+  /* Keep compare row from growing so the CodePen link sits directly under the two boxes */
+  .app-carousel .carousel-slide--found .found-asset-compare {
+    flex: 0 0 auto;
+    margin-bottom: 0;
+  }
+
+  .app-carousel .carousel-slide--found .process-card__footnote {
+    margin-top: 0.45rem;
+  }
+
   .found-asset-panel {
     display: flex;
     flex-direction: column;
@@ -947,6 +958,21 @@ body {
 
   .found-asset-mount black-hole {
     z-index: 1;
+  }
+
+  .found-asset-mount,
+  .found-asset-iframe-wrap,
+  .transform-tuner-mount,
+  .final-composition-mount {
+    touch-action: auto;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .found-asset-mount black-hole,
+  .transform-tuner-mount black-hole,
+  .final-composition-mount black-hole {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
   }
 
   .carousel-slide--process .process-card__footnote {
@@ -979,9 +1005,10 @@ body {
   .carousel-slide--process .wormhole-tuner-frame {
     width: 100%;
     max-width: 100%;
-    max-height: min(20svh, 200px);
+    min-height: 140px;
+    max-height: min(32svh, 260px);
     flex-shrink: 0;
-    touch-action: manipulation;
+    touch-action: auto;
     pointer-events: auto;
   }
 
@@ -999,14 +1026,15 @@ body {
     overflow-y: auto;
     overscroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    touch-action: auto;
     position: relative;
     z-index: 5;
     pointer-events: auto;
   }
 
   .carousel-slide--process .tuner-field__range {
-    touch-action: pan-x;
+    touch-action: auto;
+    min-height: 32px;
   }
 
   .carousel-slide--process .tuner-field__switch {
