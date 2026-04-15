@@ -187,20 +187,47 @@ function layoutFinalCompositionMount() {
 function ensureInteractiveSlideContent(index) {
   if (index === 2) {
     mountFoundAssetDemo();
-    layoutBlackHoleInMount(document.getElementById("found-asset-mount"));
+    const mount = document.getElementById("found-asset-mount");
+    if (needsBlackHoleLayout(mount)) {
+      layoutBlackHoleInMount(mount);
+    }
     return;
   }
   if (index === 3) {
+    const mount = document.getElementById("transform-tuner-mount");
+    const wasMounted = mount?.dataset.mounted === "1";
     mountTransformTuner();
     enforceMobileTransformLayout();
     wireTunerControls();
-    layoutBlackHoleInMount(document.getElementById("transform-tuner-mount"));
+    if (!wasMounted || needsBlackHoleLayout(mount)) {
+      layoutBlackHoleInMount(mount);
+    }
     return;
   }
   if (index === 5) {
+    const mount = document.getElementById("final-composition-mount");
+    const wasMounted = mount?.dataset.mounted === "1";
     mountFinalComposition();
-    layoutFinalCompositionMount();
+    if (!wasMounted) {
+      layoutFinalCompositionMount();
+    }
   }
+}
+
+/**
+ * Rebuild wormhole layout only when canvas render size is missing/stale.
+ * @param {HTMLElement | null} mount
+ */
+function needsBlackHoleLayout(mount) {
+  const bh = mount?.querySelector("black-hole");
+  if (!bh || typeof bh.resize !== "function") return false;
+  if (!bh.render) return true;
+  const r = bh.getBoundingClientRect();
+  if (r.width < 2 || r.height < 2) return true;
+  return (
+    Math.abs((bh.render.width || 0) - r.width) > 1 ||
+    Math.abs((bh.render.height || 0) - r.height) > 1
+  );
 }
 
 /** Apply hard layout constraints so mobile transform controls stay below visual. */
@@ -247,6 +274,11 @@ function flushVisibleCarouselBlackHoles(viewport) {
     const r = el.getBoundingClientRect();
     const overlap = Math.max(0, Math.min(r.bottom, vr.bottom) - Math.max(r.top, vr.top));
     if (overlap <= 0) return;
+    const needs =
+      !el.render ||
+      Math.abs((el.render.width || 0) - r.width) > 1 ||
+      Math.abs((el.render.height || 0) - r.height) > 1;
+    if (!needs) return;
     if (typeof el.resize === "function") {
       el.resize();
     }
@@ -383,6 +415,11 @@ function wireTunerControls() {
     bh._tunerHoleSizeMul = Number.parseFloat(hole?.value || "1");
     bh._tunerAstronautYOffsetPx = Number.parseFloat(astro?.value || "0");
     bh._tunerAstronautHidden = astroToggle ? !astroToggle.checked : false;
+    const astroLayer = root.querySelector(".astronaut-float__depth");
+    if (astroLayer) {
+      astroLayer.style.opacity = bh._tunerAstronautHidden ? "0" : "1";
+      astroLayer.style.visibility = bh._tunerAstronautHidden ? "hidden" : "visible";
+    }
     root.querySelectorAll("[data-tuner-value-for]").forEach((el) => {
       const id = el.getAttribute("data-tuner-value-for");
       const input = id && document.getElementById(id);
