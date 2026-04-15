@@ -7,7 +7,7 @@ const CODEPEN_EMBED_SRC =
   "https://codepen.io/wodniack/embed/XJbYWXx?default-tab=result&theme-id=dark";
 
 const HOLE_MARKUP = `
-<black-hole class="found-asset-hole">
+<black-hole class="found-asset-hole" data-text-scale="0.8">
   <canvas class="js-canvas-back" aria-hidden="true"></canvas>
   <canvas class="js-canvas-front" aria-hidden="true"></canvas>
 </black-hole>

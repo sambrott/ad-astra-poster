@@ -504,8 +504,13 @@ class BlackHole extends HTMLElement {
 
     const topY = this.topY;
     const compact = this._layoutHints?.compact ?? false;
+    const textScaleAttr = Number.parseFloat(this.getAttribute("data-text-scale") || "1", 10);
+    const textScaleMul =
+      Number.isFinite(textScaleAttr) && textScaleAttr > 0 ? textScaleAttr : 1;
     const typeScale =
-      wormholeTypeScale(compact) * (this.isTuner() ? this._tunerTypeScaleMul ?? 1 : 1);
+      wormholeTypeScale(compact) *
+      (this.isTuner() ? this._tunerTypeScaleMul ?? 1 : 1) *
+      textScaleMul;
     for (let i = 0; i < this.particles.length; i++) {
       const dot = this.particles[i];
       if (!discPredicate(dot.d.discIndex)) continue;
