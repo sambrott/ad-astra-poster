@@ -103,6 +103,10 @@ body {
   margin-bottom: 0;
 }
 
+.process-card__mobile-hint {
+  display: none;
+}
+
 .process-card__compare {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -895,6 +899,18 @@ body {
   .carousel-slide--master .process-card__body {
     font-size: clamp(0.65rem, 2.82vw, 0.84rem);
     line-height: 1.36;
+  }
+
+  .carousel-slide--master .process-card__mobile-hint {
+    display: block;
+    margin: 0.42rem 0 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.58);
+    text-align: center;
+    flex: 0 0 auto;
   }
 
   .carousel-slide--master .process-figure__img {

@@ -170,6 +170,49 @@ function layoutFinalCompositionMount() {
   });
 }
 
+/** Mobile reliability: eagerly mount heavy process visuals so snap timing never skips lazy mounts. */
+function initMobileInteractiveHydration() {
+  const mq = window.matchMedia("(max-width: 768px)");
+
+  const hydrate = () => {
+    if (!mq.matches) return;
+
+    mountFoundAssetDemo();
+    mountTransformTuner();
+    mountFinalComposition();
+    wireTunerControls();
+
+    const foundMount = document.getElementById("found-asset-mount");
+    const tunerMount = document.getElementById("transform-tuner-mount");
+
+    layoutBlackHoleInMount(foundMount);
+    layoutBlackHoleInMount(tunerMount);
+    layoutFinalCompositionMount();
+    flushAllCarouselBlackHoles();
+  };
+
+  const hydrateSoon = () => {
+    requestAnimationFrame(() => {
+      hydrate();
+      setTimeout(hydrate, 150);
+      setTimeout(hydrate, 420);
+    });
+  };
+
+  hydrateSoon();
+  window.addEventListener("resize", hydrateSoon, { passive: true });
+  window.addEventListener(
+    "pageshow",
+    () => {
+      hydrateSoon();
+    },
+    { passive: true }
+  );
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) hydrateSoon();
+  });
+}
+
 /**
  * After scroll-snap settles, canvases often need another resize (off-screen layout was 0×0).
  * @param {HTMLElement} root
@@ -746,6 +789,7 @@ function init() {
     },
   });
 
+  initMobileInteractiveHydration();
   initMobileCarouselLayoutHealing(root);
 
   document.getElementById("carousel-enter")?.addEventListener("click", () => {
