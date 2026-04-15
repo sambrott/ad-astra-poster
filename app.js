@@ -504,7 +504,7 @@ class BlackHole extends HTMLElement {
 
     const topY = this.topY;
     const compact = this._layoutHints?.compact ?? false;
-    const textScaleAttr = Number.parseFloat(this.getAttribute("data-text-scale") || "1", 10);
+    const textScaleAttr = Number.parseFloat(this.getAttribute("data-text-scale") || "1");
     const textScaleMul =
       Number.isFinite(textScaleAttr) && textScaleAttr > 0 ? textScaleAttr : 1;
     const typeScale =
