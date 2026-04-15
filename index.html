@@ -112,19 +112,37 @@
                 recreate the wormhole effect with the typography used in the original
                 composition.
               </p>
-              <div
-                class="found-asset-mount"
-                id="found-asset-mount"
-                data-lazy-hole
-                aria-label="Wormhole animation preview"
-              ></div>
+              <div class="found-asset-compare" role="group" aria-label="Side by side comparison">
+                <div class="found-asset-panel">
+                  <p class="found-asset-panel__label">This build</p>
+                  <div
+                    class="found-asset-mount"
+                    id="found-asset-mount"
+                    data-lazy-hole
+                    aria-label="Wormhole animation preview"
+                  ></div>
+                </div>
+                <div class="found-asset-panel">
+                  <p class="found-asset-panel__label">Original (CodePen)</p>
+                  <div class="found-asset-iframe-wrap">
+                    <iframe
+                      class="found-asset-iframe"
+                      title="Antoine Wodniack — Wormhole on CodePen"
+                      src="https://codepen.io/wodniack/embed/XJbYWXx?default-tab=result&amp;theme-id=dark"
+                      loading="lazy"
+                      allowfullscreen="true"
+                      sandbox="allow-scripts allow-same-origin allow-popups"
+                    ></iframe>
+                  </div>
+                </div>
+              </div>
               <p class="process-card__footnote">
                 <a
                   class="process-card__link"
                   href="https://codepen.io/wodniack/pen/XJbYWXx"
                   target="_blank"
                   rel="noopener noreferrer"
-                  >Open the CodePen source</a
+                  >Open the CodePen in a new tab</a
                 >
               </p>
             </article>
@@ -142,24 +160,13 @@
                 one composed of the “LOSS OF SIGNAL” text. I also included an animation of the
                 astronaut descending into the wormhole.
               </p>
-              <div class="process-card__split">
-                <div class="process-card__split-text">
-                  <p class="process-card__body process-card__body--tight">
-                    The same canvas pipeline drives both the CodePen-inspired wormhole and the
-                    final poster: discs, particles, and layered typography in IBM Plex Mono.
-                  </p>
-                </div>
-                <div class="process-card__split-visual">
-                  <img
-                    src="assets/Ad-Astra-Blank.jpg"
-                    alt=""
-                    class="process-thumb"
-                    width="320"
-                    height="480"
-                    loading="lazy"
-                  />
-                </div>
-              </div>
+              <p class="process-card__body process-card__body--tight">
+                The same canvas pipeline drives both the CodePen-inspired wormhole and the final
+                poster: discs, particles, and layered typography in IBM Plex Mono. Use the controls
+                to explore type scale, motion speed, descent timing, astronaut position, and frame
+                size.
+              </p>
+              <div id="transform-tuner-mount" class="transform-tuner-mount"></div>
             </article>
           </section>
 
@@ -194,26 +201,17 @@
             class="carousel-slide carousel-slide--process"
             aria-labelledby="slide-final-title"
           >
-            <article class="process-card">
+            <article class="process-card process-card--final">
               <h2 class="process-card__title" id="slide-final-title">Final Composition</h2>
               <p class="process-card__body">
                 An animated movie poster using assets from multiple creators and integrated to
-                further emphasize the themes of loss and miscommunication in the film. The
-                motion is available on this site—return to the first slide to view it live.
+                further emphasize the themes of loss and miscommunication in the film. The live
+                motion is embedded below—use the first slide for the full edge-to-edge view.
               </p>
-              <div class="process-card__hero">
-                <img
-                  src="assets/Ad-Astra-Blank.jpg"
-                  alt="Final printed poster artwork"
-                  class="process-hero-img"
-                  width="540"
-                  height="800"
-                  loading="lazy"
-                />
-              </div>
+              <div id="final-composition-mount" class="final-composition-mount"></div>
               <p class="process-card__cta">
                 <button type="button" class="process-btn" data-carousel-go="0">
-                  View live poster
+                  View live poster (first slide)
                 </button>
               </p>
             </article>
@@ -224,12 +222,12 @@
       <!-- Home: enter process deck -->
       <button
         type="button"
-        class="carousel-enter"
+        class="carousel-fab--enter"
         id="carousel-enter"
         aria-label="See how it’s made"
       >
-        <span class="carousel-enter__chev" aria-hidden="true">→</span>
-        <span class="carousel-enter__label">See how it’s made</span>
+        <span class="carousel-fab--enter-icon" aria-hidden="true">→</span>
+        <span class="carousel-fab--enter-text">See how it’s made</span>
       </button>
 
       <!-- Slides 1–5: prev / next -->

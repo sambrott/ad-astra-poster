@@ -99,7 +99,17 @@ class BlackHole extends HTMLElement {
     this.astronautIdleStartMs = null;
     /** Poster height (px); set in resize() for tear speed scaling on mobile. */
     this._posterHeightPx = REF_POSTER_HEIGHT_PX;
+    /** Optional live controls when the element has the data-tuner attribute. */
+    this._tunerTypeScaleMul = 1;
+    this._tunerMotionSpeedMul = 1;
+    this._tunerDescentSpeedMul = 1;
+    this._tunerAstronautYOffsetPx = 0;
     this.ready();
+  }
+
+  /** When true, canvas motion / type / astronaut respond to `_tuner*` fields. */
+  isTuner() {
+    return this.hasAttribute("data-tuner");
   }
 
   async ready() {
@@ -226,6 +236,7 @@ class BlackHole extends HTMLElement {
       hints.astronautEndExtraDown;
     yEnd += ASTRONAUT_DESKTOP_NUDGE_PX;
     if (hints.compact) yEnd += ASTRONAUT_MOBILE_REST_DOWN_PX;
+    if (this.isTuner()) yEnd += this._tunerAstronautYOffsetPx ?? 0;
     this.astronautTranslateYEnd = yEnd;
   }
 
@@ -396,9 +407,10 @@ class BlackHole extends HTMLElement {
   }
 
   moveDiscs() {
+    const mul = this.isTuner() ? this._tunerMotionSpeedMul ?? 1 : 1;
     for (let i = 0; i < this.discs.length; i++) {
       const d = this.discs[i];
-      d.p = (d.p + 0.0003) % 1;
+      d.p = (d.p + 0.0003 * mul) % 1;
       this.mapDisc(d);
       const p = d.sx * d.sy;
       d.a = p < 0.01 ? Math.pow(Math.min(p / 0.01, 1), 3) : p > 0.2 ? 1 - Math.min((p - 0.2) / 0.8, 1) : 1;
@@ -406,10 +418,11 @@ class BlackHole extends HTMLElement {
   }
 
   moveParticles() {
+    const mul = this.isTuner() ? this._tunerMotionSpeedMul ?? 1 : 1;
     for (let i = 0; i < this.particles.length; i++) {
       const dot = this.particles[i];
       const depth = dot.d.sx * dot.d.sy;
-      dot.p = (dot.p + 0.00045 * easeInExpo(1 - depth)) % 1;
+      dot.p = (dot.p + 0.00045 * easeInExpo(1 - depth) * mul) % 1;
     }
   }
 
@@ -491,7 +504,8 @@ class BlackHole extends HTMLElement {
 
     const topY = this.topY;
     const compact = this._layoutHints?.compact ?? false;
-    const typeScale = wormholeTypeScale(compact);
+    const typeScale =
+      wormholeTypeScale(compact) * (this.isTuner() ? this._tunerTypeScaleMul ?? 1 : 1);
     for (let i = 0; i < this.particles.length; i++) {
       const dot = this.particles[i];
       if (!discPredicate(dot.d.discIndex)) continue;
@@ -552,7 +566,8 @@ class BlackHole extends HTMLElement {
     }
 
     const now = performance.now();
-    const elapsed = now - this.astronautDescentStartMs;
+    const descentMul = this.isTuner() ? this._tunerDescentSpeedMul ?? 1 : 1;
+    const elapsed = (now - this.astronautDescentStartMs) * descentMul;
     const tLinear = Math.min(1, elapsed / ASTRONAUT_CYCLE_MS);
     const u = easeInOutCubic(tLinear);
 
