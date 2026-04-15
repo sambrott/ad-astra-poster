@@ -445,25 +445,58 @@ body {
   text-align: right;
 }
 
-/* Final composition: live poster under copy */
+/* Final composition: live poster under copy (not full-page hero — cap size so slide fits) */
 .process-card--final {
   max-width: min(960px, 100%);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
 }
 
 .final-composition-mount {
   display: flex;
   justify-content: center;
+  align-items: center;
   width: 100%;
-  margin: 1rem 0 1.5rem;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0.65rem 0 0;
+  overflow: hidden;
 }
 
 .final-composition-mount .poster-page--embed {
   width: 100%;
+  min-height: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
+/*
+  Hero poster uses 100dvh for --fit-h; the embed must not — reserve space for title, body,
+  dot rail, and slide padding so the slide fits one viewport without page/slide scroll.
+*/
 .final-composition-mount .poster-frame {
   margin-left: auto;
   margin-right: auto;
+  --final-chrome-reserve: clamp(200px, 28svh, 340px);
+  width: min(
+    92vw,
+    27in,
+    calc(
+      min(
+          50svh,
+          max(0px, 100svh - var(--final-chrome-reserve)),
+          max(0px, 100dvh - var(--final-chrome-reserve))
+        ) * 27 /
+        40
+    )
+  );
+  max-width: 100%;
+  aspect-ratio: 27 / 40;
+  height: auto;
 }
 
 .process-card__footnote {
@@ -918,7 +951,7 @@ body {
     object-fit: contain;
   }
 
-  /* Final composition embed */
+  /* Final composition embed — tighter chrome on small screens */
   .carousel-slide--process .final-composition-mount {
     flex: 1 1 auto;
     min-height: 0;
@@ -930,8 +963,7 @@ body {
   }
 
   .carousel-slide--process .final-composition-mount .poster-frame {
-    width: min(92vw, 27in, calc(36svh * 27 / 40));
-    max-height: min(36svh, calc(92vw * 40 / 27));
+    --final-chrome-reserve: clamp(170px, 34svh, 260px);
   }
 
   .carousel-slide--poster .poster-page {
