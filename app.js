@@ -104,6 +104,10 @@ class BlackHole extends HTMLElement {
     this._tunerMotionSpeedMul = 1;
     this._tunerDescentSpeedMul = 1;
     this._tunerAstronautYOffsetPx = 0;
+    /** When true (tuner UI), astronaut layer is hidden. */
+    this._tunerAstronautHidden = false;
+    /** Scales disc ellipse radii (wormhole opening / funnel width) in tuner mode. */
+    this._tunerHoleSizeMul = 1;
     this.ready();
   }
 
@@ -164,10 +168,14 @@ class BlackHole extends HTMLElement {
     if (poster) {
       const ph = poster.getBoundingClientRect().height;
       this._posterHeightPx = ph;
-      const gb = STAGE_BOTTOM_MUL;
-      const baseBottom = ph * (0.5 - STAGE_HALF_OFFSET_BASE_PX / REF_POSTER_HEIGHT_PX);
-      const bottomExtra = (gb - 1) * ph * TUNE_STAGE_Y_BOTTOM_FRAC;
-      poster.style.setProperty("--poster-stage-bottom", `${Math.max(0, baseBottom + bottomExtra)}px`);
+      if (poster.classList.contains("poster--wormhole-only")) {
+        poster.style.setProperty("--poster-stage-bottom", "0px");
+      } else {
+        const gb = STAGE_BOTTOM_MUL;
+        const baseBottom = ph * (0.5 - STAGE_HALF_OFFSET_BASE_PX / REF_POSTER_HEIGHT_PX);
+        const bottomExtra = (gb - 1) * ph * TUNE_STAGE_Y_BOTTOM_FRAC;
+        poster.style.setProperty("--poster-stage-bottom", `${Math.max(0, baseBottom + bottomExtra)}px`);
+      }
     }
 
     const rect = this.getBoundingClientRect();
@@ -214,6 +222,25 @@ class BlackHole extends HTMLElement {
       this.astronautTranslateYEnd = null;
       return;
     }
+    const hints = this._layoutHints ?? this.layoutHints();
+    if (poster.classList.contains("poster--wormhole-only")) {
+      const sr = stage.getBoundingClientRect();
+      const h = this.render.height;
+      const img = el.querySelector("img");
+      const imgH = img?.offsetHeight || h * 0.22;
+      const scaleAtEnd = (1 - ASTRONAUT_SCALE_SHRINK) * ASTRONAUT_SCALE_MAX;
+      const halfImgScaled = (imgH * scaleAtEnd) / 2;
+      const directorTopInStage = sr.height * 0.88;
+      let yEnd =
+        directorTopInStage -
+        ASTRONAUT_GAP_ABOVE_DIRECTOR_PX -
+        halfImgScaled -
+        h / 2 +
+        hints.astronautEndExtraDown;
+      if (this.isTuner()) yEnd += this._tunerAstronautYOffsetPx ?? 0;
+      this.astronautTranslateYEnd = yEnd;
+      return;
+    }
     const pr = poster.getBoundingClientRect();
     const sr = stage.getBoundingClientRect();
     const h = this.render.height;
@@ -223,7 +250,6 @@ class BlackHole extends HTMLElement {
     const directorTopFromPosterTop = pr.height * (1 - frac);
     let directorTopInStage = directorTopFromPosterTop - (sr.top - pr.top);
     directorTopInStage = Math.max(0, directorTopInStage);
-    const hints = this._layoutHints ?? this.layoutHints();
     const img = el.querySelector("img");
     const imgH = img?.offsetHeight || h * 0.22;
     const scaleAtEnd = (1 - ASTRONAUT_SCALE_SHRINK) * ASTRONAUT_SCALE_MAX;
@@ -399,8 +425,9 @@ class BlackHole extends HTMLElement {
   mapDisc(d) {
     d.sx = 1 - easeOutCubic(d.p);
     d.sy = 1 - easeOutExpo(d.p);
-    d.w = this.render.w * d.sx;
-    d.h = this.render.h * d.sy;
+    const holeMul = this.isTuner() ? this._tunerHoleSizeMul ?? 1 : 1;
+    d.w = this.render.w * d.sx * holeMul;
+    d.h = this.render.h * d.sy * holeMul;
     d.x = this.render.x;
     d.y = this.render.y + d.p * this.render.h;
     return d;
@@ -554,6 +581,11 @@ class BlackHole extends HTMLElement {
   updateAstronautDescent() {
     const el = this.astronautDepthEl;
     if (!el || !this.render) return;
+    if (this.isTuner() && this._tunerAstronautHidden) {
+      el.style.opacity = "0";
+      el.style.visibility = "hidden";
+      return;
+    }
     const { height: h } = this.render;
     if (this.astronautTranslateYEnd == null) {
       this.cacheAstronautDescentEnd();

@@ -48,34 +48,28 @@ const POSTER_LIVE_MARKUP = `
 const TRANSFORM_TUNER_MARKUP = `
 <div class="transform-tuner" id="transform-tuner-root">
   <div class="transform-tuner__visual">
-    <div class="poster-page poster-page--embed">
-      <div class="poster-frame poster-frame--tuner" style="--tuner-frame-scale: 0.58">
-        <figure class="poster">
-          <div class="poster__bg" role="presentation"></div>
-          <div class="poster__tear" role="presentation" aria-hidden="true">
-            <div class="poster__tear-inner"></div>
-          </div>
-          <div class="poster__stage">
-            <black-hole data-tuner>
-              <canvas class="js-canvas-back" aria-hidden="true"></canvas>
-              <canvas class="js-canvas-front" aria-hidden="true"></canvas>
-            </black-hole>
-            <div class="astronaut-float" aria-hidden="true">
-              <div class="astronaut-float__depth">
-                <img
-                  class="astronaut-float__img"
-                  src="images/astronaut.png"
-                  alt=""
-                  decoding="async"
-                  width="378"
-                  height="426"
-                  onerror="this.onerror=null;this.src='images/astronaut.svg'"
-                />
-              </div>
+    <div class="wormhole-tuner-frame">
+      <figure class="poster poster--wormhole-only">
+        <div class="poster__stage">
+          <black-hole data-tuner>
+            <canvas class="js-canvas-back" aria-hidden="true"></canvas>
+            <canvas class="js-canvas-front" aria-hidden="true"></canvas>
+          </black-hole>
+          <div class="astronaut-float" aria-hidden="true">
+            <div class="astronaut-float__depth">
+              <img
+                class="astronaut-float__img"
+                src="images/astronaut.png"
+                alt=""
+                decoding="async"
+                width="378"
+                height="426"
+                onerror="this.onerror=null;this.src='images/astronaut.svg'"
+              />
             </div>
           </div>
-        </figure>
-      </div>
+        </div>
+      </figure>
     </div>
   </div>
   <div class="transform-tuner__panel" role="group" aria-label="Wormhole parameters">
@@ -90,19 +84,20 @@ const TRANSFORM_TUNER_MARKUP = `
       <span class="tuner-field__value" data-tuner-value-for="tuner-slider-motion">1</span>
     </div>
     <div class="tuner-field">
-      <label class="tuner-field__label" for="tuner-slider-descent">Astronaut descent speed</label>
-      <input id="tuner-slider-descent" class="tuner-field__range" type="range" min="0.2" max="3.2" step="0.01" value="1" />
-      <span class="tuner-field__value" data-tuner-value-for="tuner-slider-descent">1</span>
+      <label class="tuner-field__label" for="tuner-slider-hole">Hole size</label>
+      <input id="tuner-slider-hole" class="tuner-field__range" type="range" min="0.82" max="3" step="0.01" value="1" />
+      <span class="tuner-field__value" data-tuner-value-for="tuner-slider-hole">1</span>
     </div>
-    <div class="tuner-field">
-      <label class="tuner-field__label" for="tuner-slider-astro">Astronaut vertical offset</label>
-      <input id="tuner-slider-astro" class="tuner-field__range" type="range" min="-140" max="140" step="1" value="0" />
-      <span class="tuner-field__value" data-tuner-value-for="tuner-slider-astro">0</span>
-    </div>
-    <div class="tuner-field">
-      <label class="tuner-field__label" for="tuner-slider-frame">Poster frame size</label>
-      <input id="tuner-slider-frame" class="tuner-field__range" type="range" min="0.28" max="1" step="0.01" value="0.58" />
-      <span class="tuner-field__value" data-tuner-value-for="tuner-slider-frame">0.58</span>
+    <div class="tuner-field tuner-field--astro">
+      <span class="tuner-field__label">Astronaut vertical offset</span>
+      <div class="tuner-field__astro-row">
+        <label class="tuner-field__switch">
+          <input type="checkbox" id="tuner-toggle-astro" checked aria-label="Show astronaut" />
+          <span class="tuner-field__switch-track" aria-hidden="true"></span>
+        </label>
+        <input id="tuner-slider-astro" class="tuner-field__range" type="range" min="-140" max="140" step="1" value="0" />
+        <span class="tuner-field__value" data-tuner-value-for="tuner-slider-astro">0</span>
+      </div>
     </div>
   </div>
 </div>
@@ -142,22 +137,21 @@ function mountFinalComposition() {
 function wireTunerControls() {
   const root = document.getElementById("transform-tuner-root");
   const bh = root?.querySelector("black-hole[data-tuner]");
-  const frame = root?.querySelector(".poster-frame--tuner");
+  const frame = root?.querySelector(".wormhole-tuner-frame");
   if (!root || !bh || !frame || bh.dataset.tunerWired === "1") return;
 
   const type = document.getElementById("tuner-slider-type");
   const motion = document.getElementById("tuner-slider-motion");
-  const descent = document.getElementById("tuner-slider-descent");
+  const hole = document.getElementById("tuner-slider-hole");
   const astro = document.getElementById("tuner-slider-astro");
-  const frameR = document.getElementById("tuner-slider-frame");
+  const astroToggle = document.getElementById("tuner-toggle-astro");
 
   const sync = () => {
     bh._tunerTypeScaleMul = Number.parseFloat(type?.value || "1");
     bh._tunerMotionSpeedMul = Number.parseFloat(motion?.value || "1");
-    bh._tunerDescentSpeedMul = Number.parseFloat(descent?.value || "1");
+    bh._tunerHoleSizeMul = Number.parseFloat(hole?.value || "1");
     bh._tunerAstronautYOffsetPx = Number.parseFloat(astro?.value || "0");
-    const fs = Number.parseFloat(frameR?.value || "0.58");
-    frame.style.setProperty("--tuner-frame-scale", String(fs));
+    bh._tunerAstronautHidden = astroToggle ? !astroToggle.checked : false;
     root.querySelectorAll("[data-tuner-value-for]").forEach((el) => {
       const id = el.getAttribute("data-tuner-value-for");
       const input = id && document.getElementById(id);
@@ -170,9 +164,10 @@ function wireTunerControls() {
     window.dispatchEvent(new Event("resize"));
   };
 
-  [type, motion, descent, astro, frameR].forEach((el) => {
+  [type, motion, hole, astro].forEach((el) => {
     el?.addEventListener("input", sync);
   });
+  astroToggle?.addEventListener("change", sync);
   bh.dataset.tunerWired = "1";
   sync();
 }
@@ -209,11 +204,434 @@ function applySlide(root, index) {
   }
 }
 
+/**
+ * Mobile only: vertical swipe between slides (desktop unchanged).
+ * @param {HTMLElement} root
+ * @param {function(number): void} goTo
+ */
+function initMobileVerticalSwipe(root, goTo) {
+  const viewport = document.getElementById("carousel-viewport");
+  if (!viewport) return;
+
+  const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
+
+  let startY = 0;
+  let startX = 0;
+  let active = false;
+
+  viewport.addEventListener(
+    "touchstart",
+    (e) => {
+      if (!isMobileViewport() || e.touches.length !== 1) return;
+      startY = e.touches[0].clientY;
+      startX = e.touches[0].clientX;
+      active = true;
+    },
+    { passive: true }
+  );
+
+  viewport.addEventListener(
+    "touchend",
+    (e) => {
+      if (!active || !isMobileViewport()) {
+        active = false;
+        return;
+      }
+      active = false;
+      if (!e.changedTouches.length) return;
+      const endY = e.changedTouches[0].clientY;
+      const endX = e.changedTouches[0].clientX;
+      const dy = startY - endY;
+      const dx = startX - endX;
+      if (Math.abs(dy) < 56) return;
+      if (Math.abs(dy) < Math.abs(dx) * 1.15) return;
+
+      const lb = document.getElementById("image-lightbox");
+      if (lb && !lb.hidden) return;
+
+      const slide = Number.parseInt(root.dataset.carouselSlide || "0", 10);
+      const slides = root.querySelectorAll(".carousel-slide");
+      const currentSlideEl = slides[slide];
+      if (!currentSlideEl) return;
+
+      if (dy > 0) {
+        if (currentSlideEl.classList.contains("carousel-slide--process")) {
+          const st = currentSlideEl.scrollTop;
+          const ch = currentSlideEl.clientHeight;
+          const sh = currentSlideEl.scrollHeight;
+          if (st + ch < sh - 8) return;
+        }
+        if (slide === TOTAL_SLIDES - 1) goTo(0);
+        else goTo(slide + 1);
+      } else {
+        if (currentSlideEl.classList.contains("carousel-slide--process")) {
+          if (currentSlideEl.scrollTop > 8) return;
+        }
+        if (slide === 0) goTo(TOTAL_SLIDES - 1);
+        else goTo(slide - 1);
+      }
+    },
+    { passive: true }
+  );
+
+  viewport.addEventListener(
+    "touchcancel",
+    () => {
+      active = false;
+    },
+    { passive: true }
+  );
+}
+
+const CAROUSEL_HINT_KEY = "adastra-carousel-poster-hint";
+
+/**
+ * Mobile only: one-time chevron + poster frame nudge on first load.
+ * @param {HTMLElement} root
+ */
+function initMobilePosterHint(root) {
+  const mq = window.matchMedia("(max-width: 768px)");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+  function schedule() {
+    if (!mq.matches || reduce.matches) return;
+    if (sessionStorage.getItem(CAROUSEL_HINT_KEY)) return;
+    root.classList.add("carousel-mobile-hint--intro");
+    window.setTimeout(() => {
+      root.classList.remove("carousel-mobile-hint--intro");
+      sessionStorage.setItem(CAROUSEL_HINT_KEY, "1");
+    }, 2600);
+  }
+
+  if (document.readyState === "complete") {
+    window.setTimeout(schedule, 450);
+  } else {
+    window.addEventListener("load", () => window.setTimeout(schedule, 450), { once: true });
+  }
+
+  mq.addEventListener("change", () => {
+    if (!mq.matches) root.classList.remove("carousel-mobile-hint--intro");
+  });
+}
+
+/**
+ * @param {HTMLElement} root
+ */
+function initImageLightbox(root) {
+  const box = document.getElementById("image-lightbox");
+  const backdrop = box?.querySelector(".image-lightbox__backdrop");
+  const closeBtn = box?.querySelector(".image-lightbox__close");
+  const scroller = box?.querySelector(".image-lightbox__scroller");
+  const panzoom = box?.querySelector(".image-lightbox__panzoom");
+  const imgEl = box?.querySelector(".image-lightbox__img");
+  const capEl = box?.querySelector(".image-lightbox__cap");
+  const prevBtn = box?.querySelector(".image-lightbox__nav--prev");
+  const nextBtn = box?.querySelector(".image-lightbox__nav--next");
+  if (!box || !imgEl || !scroller || !panzoom) return;
+
+  function isLightboxZoomDisabled() {
+    return (
+      window.matchMedia("(max-width: 768px)").matches ||
+      window.matchMedia("(pointer: coarse)").matches
+    );
+  }
+
+  function updateZoomClass() {
+    box.classList.toggle("image-lightbox--no-zoom", isLightboxZoomDisabled());
+  }
+
+  const ZOOM_MAX = 2;
+  let scale = 1;
+  let panX = 0;
+  let panY = 0;
+  let compareIndex = 0;
+  /** @type {HTMLElement[]} */
+  let thumbs = [];
+  /** @type {HTMLElement | null} */
+  let lastFocus = null;
+
+  function refreshThumbs() {
+    thumbs = Array.from(root.querySelectorAll(".process-card__compare .process-figure__img"));
+  }
+
+  function clampPan() {
+    const vw = scroller.clientWidth;
+    const vh = scroller.clientHeight;
+    const iw = imgEl.offsetWidth;
+    const ih = imgEl.offsetHeight;
+    if (iw < 1 || ih < 1 || vw < 1 || vh < 1) return;
+    const sw = iw * scale;
+    const sh = ih * scale;
+    const maxPanX = Math.max(0, (sw - vw) / 2);
+    const maxPanY = Math.max(0, (sh - vh) / 2);
+    panX = Math.min(maxPanX, Math.max(-maxPanX, panX));
+    panY = Math.min(maxPanY, Math.max(-maxPanY, panY));
+  }
+
+  function applyPanZoom() {
+    panzoom.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+    scroller.dataset.zoom = scale > 1 ? "zoomed" : "fit";
+  }
+
+  function showAt(index) {
+    refreshThumbs();
+    const n = thumbs.length;
+    if (n === 0) return;
+    compareIndex = ((index % n) + n) % n;
+    const fromImg = thumbs[compareIndex];
+    imgEl.src = fromImg.getAttribute("src") || "";
+    imgEl.alt = fromImg.getAttribute("alt") || "";
+    const fig = fromImg.closest("figure");
+    const cap = fig?.querySelector(".process-figure__cap");
+    if (capEl) {
+      capEl.textContent = cap ? cap.textContent.trim() : "";
+    }
+    scale = 1;
+    panX = 0;
+    panY = 0;
+    panzoom.classList.add("is-dragging");
+    updateZoomClass();
+    applyPanZoom();
+    const syncAfterLayout = () => {
+      clampPan();
+      applyPanZoom();
+      requestAnimationFrame(() => {
+        panzoom.classList.remove("is-dragging");
+      });
+    };
+    if (imgEl.complete) {
+      requestAnimationFrame(syncAfterLayout);
+    } else {
+      imgEl.addEventListener("load", syncAfterLayout, { once: true });
+    }
+  }
+
+  function goPrev() {
+    refreshThumbs();
+    if (thumbs.length === 0) return;
+    showAt(compareIndex - 1);
+  }
+
+  function goNext() {
+    refreshThumbs();
+    if (thumbs.length === 0) return;
+    showAt(compareIndex + 1);
+  }
+
+  function open(fromImg) {
+    lastFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    refreshThumbs();
+    const i = thumbs.indexOf(fromImg);
+    compareIndex = i >= 0 ? i : 0;
+    box.hidden = false;
+    document.body.style.overflow = "hidden";
+    showAt(compareIndex);
+    closeBtn?.focus();
+  }
+
+  function close() {
+    box.hidden = true;
+    document.body.style.overflow = "";
+    imgEl.removeAttribute("src");
+    imgEl.alt = "";
+    if (capEl) capEl.textContent = "";
+    scale = 1;
+    panX = 0;
+    panY = 0;
+    panzoom.classList.remove("is-dragging");
+    applyPanZoom();
+    lastFocus?.focus();
+    lastFocus = null;
+  }
+
+  root.querySelectorAll(".process-card__compare .process-figure__img").forEach((img) => {
+    img.tabIndex = 0;
+    img.setAttribute("role", "button");
+    const cap = img.closest("figure")?.querySelector(".process-figure__cap");
+    if (cap) {
+      img.setAttribute("aria-label", `View enlarged: ${cap.textContent.trim()}`);
+    }
+  });
+
+  root.addEventListener("click", (e) => {
+    const img = e.target.closest(".process-card__compare .process-figure__img");
+    if (!img || !root.contains(img)) return;
+    e.preventDefault();
+    open(img);
+  });
+
+  root.addEventListener("keydown", (e) => {
+    const img = e.target.closest(".process-card__compare .process-figure__img");
+    if (!img || !root.contains(img)) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      open(img);
+    }
+  });
+
+  closeBtn?.addEventListener("click", close);
+  backdrop?.addEventListener("click", close);
+
+  prevBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    goPrev();
+  });
+  nextBtn?.addEventListener("click", (e) => {
+    e.stopPropagation();
+    goNext();
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (box.hidden) return;
+    if (e.key === "Escape") {
+      close();
+      return;
+    }
+    if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      goPrev();
+      return;
+    }
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      goNext();
+      return;
+    }
+  });
+
+  function toggleZoom() {
+    if (isLightboxZoomDisabled()) return;
+    panzoom.classList.remove("is-dragging");
+    scale = scale > 1 ? 1 : ZOOM_MAX;
+    if (scale === 1) {
+      panX = 0;
+      panY = 0;
+    }
+    clampPan();
+    applyPanZoom();
+  }
+
+  const TAP_THRESHOLD = 6;
+  const TAP_SLOP = 14;
+
+  /** @type {"tap" | null} */
+  let dragMode = null;
+  /** True once movement exceeds threshold while zoomed — then we pan instead of tap-to-zoom-out. */
+  let panCommitted = false;
+  let downPointerId = null;
+  let downX = 0;
+  let downY = 0;
+  let lastX = 0;
+  let lastY = 0;
+
+  function onResizeWhileOpen() {
+    if (box.hidden) return;
+    clampPan();
+    applyPanZoom();
+  }
+  window.addEventListener("resize", onResizeWhileOpen);
+
+  scroller.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    if (!panzoom.contains(e.target)) return;
+    if (isLightboxZoomDisabled()) return;
+
+    if (scale > 1) {
+      e.preventDefault();
+      panCommitted = false;
+      downPointerId = e.pointerId;
+      downX = lastX = e.clientX;
+      downY = lastY = e.clientY;
+      return;
+    }
+
+    if (e.pointerType === "touch") return;
+    dragMode = "tap";
+    downPointerId = e.pointerId;
+    downX = e.clientX;
+    downY = e.clientY;
+  });
+
+  scroller.addEventListener("pointermove", (e) => {
+    if (e.pointerId !== downPointerId) return;
+
+    if (scale > 1) {
+      const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+      if (!panCommitted && moved > TAP_THRESHOLD) {
+        panCommitted = true;
+        panzoom.classList.add("is-dragging");
+        scroller.setPointerCapture(e.pointerId);
+        lastX = e.clientX;
+        lastY = e.clientY;
+        return;
+      }
+      if (panCommitted) {
+        const dx = e.clientX - lastX;
+        const dy = e.clientY - lastY;
+        lastX = e.clientX;
+        lastY = e.clientY;
+        panX += dx;
+        panY += dy;
+        clampPan();
+        applyPanZoom();
+      }
+      return;
+    }
+
+    if (dragMode === "tap") {
+      const moved = Math.hypot(e.clientX - downX, e.clientY - downY);
+      if (moved > TAP_THRESHOLD) {
+        dragMode = null;
+      }
+    }
+  });
+
+  scroller.addEventListener("pointerup", (e) => {
+    if (e.pointerId !== downPointerId) return;
+    if (typeof scroller.hasPointerCapture === "function" && scroller.hasPointerCapture(e.pointerId)) {
+      scroller.releasePointerCapture(e.pointerId);
+    }
+
+    if (scale > 1) {
+      panzoom.classList.remove("is-dragging");
+      const travel = Math.hypot(e.clientX - downX, e.clientY - downY);
+      if (!panCommitted && travel <= TAP_SLOP) {
+        toggleZoom();
+      }
+      panCommitted = false;
+      downPointerId = null;
+      return;
+    }
+
+    if (dragMode === "tap") {
+      const travel = Math.hypot(e.clientX - downX, e.clientY - downY);
+      if (travel <= TAP_SLOP && e.pointerType !== "touch") {
+        toggleZoom();
+      }
+    }
+    dragMode = null;
+    downPointerId = null;
+  });
+
+  scroller.addEventListener("pointercancel", (e) => {
+    if (e.pointerId !== downPointerId) return;
+    if (typeof scroller.hasPointerCapture === "function" && scroller.hasPointerCapture(e.pointerId)) {
+      scroller.releasePointerCapture(e.pointerId);
+    }
+    panzoom.classList.remove("is-dragging");
+    dragMode = null;
+    panCommitted = false;
+    downPointerId = null;
+  });
+}
+
 function init() {
   const root = document.getElementById("app-carousel");
   if (!root) return;
 
   let slide = 0;
+
+  initImageLightbox(root);
 
   const goTo = (next) => {
     slide = ((next % TOTAL_SLIDES) + TOTAL_SLIDES) % TOTAL_SLIDES;
@@ -251,6 +669,8 @@ function init() {
   });
 
   root.addEventListener("keydown", (e) => {
+    const lb = document.getElementById("image-lightbox");
+    if (lb && !lb.hidden) return;
     if (slide === 0) return;
     if (e.key === "ArrowLeft") {
       e.preventDefault();
@@ -261,6 +681,9 @@ function init() {
       else goTo(slide + 1);
     }
   });
+
+  initMobileVerticalSwipe(root, goTo);
+  initMobilePosterHint(root);
 
   applySlide(root, 0);
 }

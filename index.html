@@ -56,6 +56,10 @@
                 </figure>
               </div>
             </div>
+            <div class="carousel-mobile-hint" id="carousel-mobile-hint" aria-hidden="true">
+              <span class="carousel-mobile-hint__chevron" aria-hidden="true"></span>
+              <span class="carousel-mobile-hint__text">Swipe up</span>
+            </div>
           </section>
 
           <!-- 1: Master Class -->
@@ -162,8 +166,8 @@
               <p class="process-card__body process-card__body--tight">
                 The same canvas pipeline drives both the CodePen-inspired wormhole and the final
                 poster: discs, particles, and layered typography in IBM Plex Mono. Use the controls
-                to explore type scale, motion speed, descent timing, astronaut position, and frame
-                size.
+                to explore type scale, motion speed, hole size, astronaut visibility, and vertical
+                position.
               </p>
               <div id="transform-tuner-mount" class="transform-tuner-mount"></div>
             </article>
@@ -208,11 +212,6 @@
                 motion is embedded below—use the first slide for the full edge-to-edge view.
               </p>
               <div id="final-composition-mount" class="final-composition-mount"></div>
-              <p class="process-card__cta">
-                <button type="button" class="process-btn" data-carousel-go="0">
-                  View live poster (first slide)
-                </button>
-              </p>
             </article>
           </section>
         </div>
@@ -263,6 +262,47 @@
         <button type="button" class="carousel-dot" data-slide="4" aria-label="Physical manipulation"></button>
         <button type="button" class="carousel-dot" data-slide="5" aria-label="Final composition"></button>
       </nav>
+    </div>
+
+    <div
+      id="image-lightbox"
+      class="image-lightbox"
+      hidden
+      aria-modal="true"
+      role="dialog"
+      aria-label="Enlarged image"
+    >
+      <div class="image-lightbox__backdrop" tabindex="-1" aria-hidden="true"></div>
+      <button type="button" class="image-lightbox__close" aria-label="Close">&times;</button>
+      <div class="image-lightbox__panel">
+        <figure class="image-lightbox__figure">
+          <div class="image-lightbox__strip">
+            <button
+              type="button"
+              class="image-lightbox__nav image-lightbox__nav--prev"
+              aria-label="Previous image"
+            >
+              ‹
+            </button>
+            <div class="image-lightbox__scroller">
+              <div class="image-lightbox__panzoom">
+                <img class="image-lightbox__img" alt="" decoding="async" draggable="false" />
+              </div>
+            </div>
+            <button
+              type="button"
+              class="image-lightbox__nav image-lightbox__nav--next"
+              aria-label="Next image"
+            >
+              ›
+            </button>
+          </div>
+          <figcaption class="image-lightbox__cap"></figcaption>
+        </figure>
+        <p class="image-lightbox__hint" aria-hidden="true">
+          Tap image to zoom · drag to pan when zoomed
+        </p>
+      </div>
     </div>
 
     <script type="module" src="app.js"></script>
