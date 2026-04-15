@@ -349,11 +349,12 @@ function wireTunerControls() {
 /**
  * @param {HTMLElement} root
  * @param {number} index
- * @param {{ skipScroll?: boolean }} [opts]
+ * @param {{ skipScroll?: boolean; scrollBehavior?: ScrollBehavior }} [opts]
  */
 function applySlide(root, index, opts = {}) {
   const i = Math.max(0, Math.min(TOTAL_SLIDES - 1, index));
   const skipScroll = opts.skipScroll === true;
+  const scrollBehavior = opts.scrollBehavior || "auto";
   root.dataset.carouselSlide = String(i);
   root.style.setProperty("--slide-index", String(i));
 
@@ -362,10 +363,11 @@ function applySlide(root, index, opts = {}) {
     const unit = getMobileCarouselSlideHeight(viewport);
     if (unit > 0) {
       root.dataset.carouselScrollLock = "1";
-      viewport.scrollTo({ top: i * unit, behavior: "auto" });
+      viewport.scrollTo({ top: i * unit, behavior: scrollBehavior });
+      const unlockDelay = scrollBehavior === "smooth" ? 520 : 220;
       window.setTimeout(() => {
         root.dataset.carouselScrollLock = "";
-      }, 220);
+      }, unlockDelay);
     }
   }
 
@@ -782,9 +784,9 @@ function init() {
 
   initImageLightbox(root);
 
-  const goTo = (next) => {
+  const goTo = (next, opts = {}) => {
     slide = ((next % TOTAL_SLIDES) + TOTAL_SLIDES) % TOTAL_SLIDES;
-    applySlide(root, slide);
+    applySlide(root, slide, opts);
   };
 
   initMobileScrollSnapSync(root, {
@@ -823,12 +825,21 @@ function init() {
   root.querySelectorAll("[data-carousel-go]").forEach((el) => {
     el.addEventListener("click", () => {
       const n = Number.parseInt(el.getAttribute("data-carousel-go") || "0", 10);
-      if (!Number.isNaN(n)) goTo(n);
+      if (Number.isNaN(n)) return;
+      if (n === 0 && window.matchMedia("(max-width: 768px)").matches) {
+        goTo(0, { scrollBehavior: "smooth" });
+      } else {
+        goTo(n);
+      }
     });
   });
 
   document.getElementById("carousel-back-to-top")?.addEventListener("click", () => {
-    goTo(0);
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      goTo(0, { scrollBehavior: "smooth" });
+    } else {
+      goTo(0);
+    }
   });
 
   root.addEventListener("keydown", (e) => {

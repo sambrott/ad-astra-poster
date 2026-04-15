@@ -66,15 +66,6 @@ body {
   display: none;
 }
 
-.mobile-swipe-cue__text {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.8);
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
-}
-
 .mobile-swipe-cue__chevrons {
   display: inline-flex;
   flex-direction: column;
@@ -1187,11 +1178,6 @@ body {
     pointer-events: none;
     opacity: 1;
     transition: opacity 0.25s ease;
-    background: rgba(0, 0, 0, 0.42);
-    border: 1px solid rgba(255, 255, 255, 0.22);
-    border-radius: 999px;
-    padding: 0.34rem 0.72rem 0.42rem;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   }
 
   .app-carousel:not([data-carousel-slide="0"]) .mobile-swipe-cue {
@@ -1207,7 +1193,7 @@ body {
 
   /* Transform slide: animation first, full-width controls below */
   .carousel-slide--transform .transform-tuner-mount {
-    margin-top: 0.45rem;
+    margin-top: 0.12rem;
     flex: 1 1 auto;
     min-height: 0;
     overflow-y: auto;
@@ -1216,7 +1202,11 @@ body {
   }
 
   .carousel-slide--transform .transform-tuner {
-    gap: 12px;
+    gap: 9px;
+  }
+
+  .carousel-slide--transform .process-card__body--tight {
+    margin-bottom: 0.2rem;
   }
 
   .carousel-slide--transform .transform-tuner__visual {
