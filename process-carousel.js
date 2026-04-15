@@ -158,11 +158,6 @@ function layoutBlackHoleInMount(mount) {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       flush();
-      if (window.matchMedia("(max-width: 768px)").matches) {
-        setTimeout(flush, 100);
-        setTimeout(flush, 350);
-        setTimeout(flush, 600);
-      }
     });
   });
 }
@@ -180,11 +175,6 @@ function layoutFinalCompositionMount() {
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
       flush();
-      if (window.matchMedia("(max-width: 768px)").matches) {
-        setTimeout(flush, 100);
-        setTimeout(flush, 350);
-        setTimeout(flush, 600);
-      }
     });
   });
 }

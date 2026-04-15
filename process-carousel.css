@@ -1192,18 +1192,23 @@ body {
     visibility: hidden;
   }
 
-  /* Transform slide: animation first, full-width controls below */
-  .carousel-slide--transform .transform-tuner-mount {
-    margin-top: 0.12rem;
-    flex: 1 1 auto;
-    min-height: 0;
+  /* Transform slide: hard stack, animation then sliders below */
+  .carousel-slide--transform .process-card {
     overflow-y: auto;
-    overscroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
   }
 
+  .carousel-slide--transform .transform-tuner-mount {
+    margin-top: 0.08rem;
+    flex: 0 0 auto;
+    min-height: auto;
+    overflow: visible;
+  }
+
   .carousel-slide--transform .transform-tuner {
-    gap: 9px;
+    display: block !important;
+    min-height: auto;
+    gap: 0;
   }
 
   .carousel-slide--transform .process-card__body--tight {
@@ -1212,6 +1217,9 @@ body {
 
   .carousel-slide--transform .transform-tuner__visual {
     order: 1;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 0.35rem;
   }
 
   .carousel-slide--transform .wormhole-tuner-frame {
@@ -1220,11 +1228,13 @@ body {
   }
 
   .carousel-slide--transform .transform-tuner__panel {
+    display: block;
     order: 2;
     flex: 0 0 auto;
     overflow: visible;
     max-height: none;
     max-width: 100%;
+    width: 100%;
     padding: 0.7rem 0.8rem;
   }
 
@@ -1248,6 +1258,8 @@ body {
     flex-direction: column !important;
     align-items: stretch !important;
     justify-content: flex-start !important;
+    flex-wrap: nowrap !important;
+    display: flex !important;
   }
 
   .carousel-slide--transform #transform-tuner-root .transform-tuner__visual {
