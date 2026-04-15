@@ -175,11 +175,25 @@ function wireTunerControls() {
 /**
  * @param {HTMLElement} root
  * @param {number} index
+ * @param {{ skipScroll?: boolean }} [opts]
  */
-function applySlide(root, index) {
+function applySlide(root, index, opts = {}) {
   const i = Math.max(0, Math.min(TOTAL_SLIDES - 1, index));
+  const skipScroll = opts.skipScroll === true;
   root.dataset.carouselSlide = String(i);
   root.style.setProperty("--slide-index", String(i));
+
+  const viewport = document.getElementById("carousel-viewport");
+  if (!skipScroll && viewport && window.matchMedia("(max-width: 768px)").matches) {
+    const h = viewport.clientHeight;
+    if (h > 0) {
+      root.dataset.carouselScrollLock = "1";
+      viewport.scrollTo({ top: i * h, behavior: "auto" });
+      window.setTimeout(() => {
+        root.dataset.carouselScrollLock = "";
+      }, 100);
+    }
+  }
 
   const dots = root.querySelectorAll(".carousel-dot");
   dots.forEach((dot, di) => {
@@ -205,112 +219,38 @@ function applySlide(root, index) {
 }
 
 /**
- * Mobile only: vertical swipe between slides (desktop unchanged).
+ * Mobile: sync slide index from scroll-snap viewport (desktop unchanged).
  * @param {HTMLElement} root
- * @param {function(number): void} goTo
+ * @param {{ getSlide: () => number; setSlide: (n: number) => void }} api
  */
-function initMobileVerticalSwipe(root, goTo) {
+function initMobileScrollSnapSync(root, api) {
   const viewport = document.getElementById("carousel-viewport");
   if (!viewport) return;
 
-  const isMobileViewport = () => window.matchMedia("(max-width: 768px)").matches;
-
-  let startY = 0;
-  let startX = 0;
-  let active = false;
-
-  viewport.addEventListener(
-    "touchstart",
-    (e) => {
-      if (!isMobileViewport() || e.touches.length !== 1) return;
-      startY = e.touches[0].clientY;
-      startX = e.touches[0].clientX;
-      active = true;
-    },
-    { passive: true }
-  );
-
-  viewport.addEventListener(
-    "touchend",
-    (e) => {
-      if (!active || !isMobileViewport()) {
-        active = false;
-        return;
-      }
-      active = false;
-      if (!e.changedTouches.length) return;
-      const endY = e.changedTouches[0].clientY;
-      const endX = e.changedTouches[0].clientX;
-      const dy = startY - endY;
-      const dx = startX - endX;
-      if (Math.abs(dy) < 56) return;
-      if (Math.abs(dy) < Math.abs(dx) * 1.15) return;
-
-      const lb = document.getElementById("image-lightbox");
-      if (lb && !lb.hidden) return;
-
-      const slide = Number.parseInt(root.dataset.carouselSlide || "0", 10);
-      const slides = root.querySelectorAll(".carousel-slide");
-      const currentSlideEl = slides[slide];
-      if (!currentSlideEl) return;
-
-      if (dy > 0) {
-        if (currentSlideEl.classList.contains("carousel-slide--process")) {
-          const st = currentSlideEl.scrollTop;
-          const ch = currentSlideEl.clientHeight;
-          const sh = currentSlideEl.scrollHeight;
-          if (st + ch < sh - 8) return;
-        }
-        if (slide === TOTAL_SLIDES - 1) goTo(0);
-        else goTo(slide + 1);
-      } else {
-        if (currentSlideEl.classList.contains("carousel-slide--process")) {
-          if (currentSlideEl.scrollTop > 8) return;
-        }
-        if (slide === 0) goTo(TOTAL_SLIDES - 1);
-        else goTo(slide - 1);
-      }
-    },
-    { passive: true }
-  );
-
-  viewport.addEventListener(
-    "touchcancel",
-    () => {
-      active = false;
-    },
-    { passive: true }
-  );
-}
-
-const CAROUSEL_HINT_KEY = "adastra-carousel-poster-hint";
-
-/**
- * Mobile only: one-time chevron + poster frame nudge on first load.
- * @param {HTMLElement} root
- */
-function initMobilePosterHint(root) {
   const mq = window.matchMedia("(max-width: 768px)");
-  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)");
 
-  function schedule() {
-    if (!mq.matches || reduce.matches) return;
-    if (sessionStorage.getItem(CAROUSEL_HINT_KEY)) return;
-    root.classList.add("carousel-mobile-hint--intro");
+  function syncFromScroll() {
+    if (!mq.matches || root.dataset.carouselScrollLock === "1") return;
+    const h = viewport.clientHeight;
+    if (h < 1) return;
+    const idx = Math.round(viewport.scrollTop / h);
+    const clamped = Math.min(TOTAL_SLIDES - 1, Math.max(0, idx));
+    if (clamped !== api.getSlide()) {
+      api.setSlide(clamped);
+      applySlide(root, clamped, { skipScroll: true });
+    }
+  }
+
+  viewport.addEventListener("scroll", syncFromScroll, { passive: true });
+
+  window.addEventListener("resize", () => {
+    if (!mq.matches) return;
+    const si = api.getSlide();
+    root.dataset.carouselScrollLock = "1";
+    viewport.scrollTo({ top: si * viewport.clientHeight, behavior: "auto" });
     window.setTimeout(() => {
-      root.classList.remove("carousel-mobile-hint--intro");
-      sessionStorage.setItem(CAROUSEL_HINT_KEY, "1");
-    }, 2600);
-  }
-
-  if (document.readyState === "complete") {
-    window.setTimeout(schedule, 450);
-  } else {
-    window.addEventListener("load", () => window.setTimeout(schedule, 450), { once: true });
-  }
-
-  mq.addEventListener("change", () => {
-    if (!mq.matches) root.classList.remove("carousel-mobile-hint--intro");
+      root.dataset.carouselScrollLock = "";
+    }, 120);
   });
 }
 
@@ -638,6 +578,13 @@ function init() {
     applySlide(root, slide);
   };
 
+  initMobileScrollSnapSync(root, {
+    getSlide: () => slide,
+    setSlide: (n) => {
+      slide = n;
+    },
+  });
+
   document.getElementById("carousel-enter")?.addEventListener("click", () => {
     goTo(1);
   });
@@ -681,9 +628,6 @@ function init() {
       else goTo(slide + 1);
     }
   });
-
-  initMobileVerticalSwipe(root, goTo);
-  initMobilePosterHint(root);
 
   applySlide(root, 0);
 }
