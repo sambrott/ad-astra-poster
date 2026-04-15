@@ -76,11 +76,11 @@ body {
 .mobile-swipe-cue__chevron {
   width: 0.62rem;
   height: 0.62rem;
-  border-top: 2px solid rgba(10, 10, 10, 0.5);
-  border-right: 2px solid rgba(10, 10, 10, 0.5);
+  border-top: 2px solid rgba(255, 255, 255, 0.92);
+  border-right: 2px solid rgba(255, 255, 255, 0.92);
   transform: rotate(-45deg);
   animation: mobileSwipeUpCue 1.35s ease-in-out infinite;
-  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.65));
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
 }
 
 .mobile-swipe-cue__chevron:nth-child(2) {

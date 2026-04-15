@@ -202,6 +202,7 @@ function ensureInteractiveSlideContent(index) {
   }
   if (index === 3) {
     mountTransformTuner();
+    enforceMobileTransformLayout();
     wireTunerControls();
     layoutBlackHoleInMount(document.getElementById("transform-tuner-mount"));
     return;
@@ -209,6 +210,40 @@ function ensureInteractiveSlideContent(index) {
   if (index === 5) {
     mountFinalComposition();
     layoutFinalCompositionMount();
+  }
+}
+
+/** Apply hard layout constraints so mobile transform controls stay below visual. */
+function enforceMobileTransformLayout() {
+  const root = document.getElementById("transform-tuner-root");
+  if (!root) return;
+  const isMobileLike =
+    window.matchMedia("(max-width: 900px)").matches ||
+    window.matchMedia("(pointer: coarse)").matches;
+  if (!isMobileLike) return;
+
+  const visual = root.querySelector(".transform-tuner__visual");
+  const panel = root.querySelector(".transform-tuner__panel");
+
+  root.style.flexDirection = "column";
+  root.style.alignItems = "stretch";
+  root.style.justifyContent = "flex-start";
+  root.style.gap = "9px";
+
+  if (visual) {
+    visual.style.order = "1";
+    visual.style.width = "100%";
+    visual.style.maxWidth = "100%";
+    visual.style.flex = "0 0 auto";
+  }
+
+  if (panel) {
+    panel.style.order = "2";
+    panel.style.width = "100%";
+    panel.style.maxWidth = "100%";
+    panel.style.flex = "0 0 auto";
+    panel.style.maxHeight = "none";
+    panel.style.overflowY = "visible";
   }
 }
 
@@ -326,6 +361,7 @@ function mountTransformTuner() {
   mount.innerHTML = TRANSFORM_TUNER_MARKUP;
   mount.dataset.mounted = "1";
   requestAnimationFrame(() => {
+    enforceMobileTransformLayout();
     wireTunerControls();
     layoutBlackHoleInMount(mount);
   });
@@ -475,6 +511,7 @@ function initMobileScrollSnapSync(root, api) {
 
   window.addEventListener("resize", () => {
     if (!mq.matches) return;
+    enforceMobileTransformLayout();
     const si = api.getSlide();
     const unit = Math.max(1, getMobileCarouselSlideHeight(viewport));
     root.dataset.carouselScrollLock = "1";
