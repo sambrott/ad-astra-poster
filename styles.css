@@ -251,6 +251,17 @@ black-hole .js-canvas-front {
     bottom: calc(var(--poster-stage-bottom, calc(50% - var(--poster-stage-h-base) / 2)) + 30px);
     max-height: calc(var(--stage-h) + 80px - var(--poster-stage-gutter-top));
   }
+
+  /*
+    Torn paper: desktop uses scaleY(-1) + center; on narrow viewports anchor the asset to the
+    bottom strip and mirror horizontally so the edge reads correctly. Outer .poster__tear
+    transform (slide-out) is unchanged — still translateY(var(--poster-tear-y)) only.
+  */
+  .poster__tear-inner {
+    transform: scaleX(-1);
+    transform-origin: center bottom;
+    background-position: center bottom;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
