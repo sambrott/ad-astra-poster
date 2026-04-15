@@ -62,6 +62,52 @@ body {
   min-height: 100svh;
 }
 
+.mobile-swipe-cue {
+  display: none;
+}
+
+.mobile-swipe-cue__text {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.mobile-swipe-cue__chevrons {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.18rem;
+}
+
+.mobile-swipe-cue__chevron {
+  width: 0.62rem;
+  height: 0.62rem;
+  border-top: 2px solid rgba(255, 255, 255, 0.86);
+  border-right: 2px solid rgba(255, 255, 255, 0.86);
+  transform: rotate(-45deg);
+  animation: mobileSwipeUpCue 1.35s ease-in-out infinite;
+}
+
+.mobile-swipe-cue__chevron:nth-child(2) {
+  animation-delay: 0.16s;
+}
+
+@keyframes mobileSwipeUpCue {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) rotate(-45deg);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) rotate(-45deg);
+  }
+}
+
 /* Process slides — extra bottom space for centered dot rail */
 .carousel-slide--process {
   display: flex;
@@ -1102,11 +1148,77 @@ body {
     justify-content: center;
   }
 
+  .carousel-slide--poster {
+    position: relative;
+  }
+
+  .mobile-swipe-cue {
+    position: absolute;
+    left: 50%;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 6;
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.25s ease;
+  }
+
+  .app-carousel:not([data-carousel-slide="0"]) .mobile-swipe-cue {
+    opacity: 0;
+  }
+
   .carousel-fab--enter,
   .carousel-fabs {
     display: none !important;
     pointer-events: none;
     visibility: hidden;
+  }
+
+  /* Transform slide: animation first, full-width controls below */
+  .carousel-slide--transform .transform-tuner-mount {
+    margin-top: 0.45rem;
+    overflow-y: auto;
+    overscroll-behavior: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .carousel-slide--transform .transform-tuner {
+    gap: 10px;
+  }
+
+  .carousel-slide--transform .transform-tuner__visual {
+    order: 1;
+  }
+
+  .carousel-slide--transform .wormhole-tuner-frame {
+    min-height: 188px;
+    max-height: min(40svh, 340px);
+  }
+
+  .carousel-slide--transform .transform-tuner__panel {
+    order: 2;
+    flex: 0 0 auto;
+    overflow: visible;
+    padding: 0.65rem 0.72rem;
+  }
+
+  .carousel-slide--transform .tuner-field {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 0.32rem;
+  }
+
+  .carousel-slide--transform .tuner-field__range {
+    grid-column: 1 / -1;
+  }
+
+  .carousel-slide--transform .tuner-field__value {
+    min-width: 0;
+    text-align: left;
   }
 }
 
