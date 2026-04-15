@@ -101,34 +101,19 @@ body {
   --poster-director-from-bottom: 18%;
 }
 
-/* White shows through where the JPEG is masked off (bottom ~third, torn edge). */
-.poster__paper {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  background: #fff;
-  pointer-events: none;
-}
-
-/* Blank one-sheet art — masked so the bottom third falls away to paper (images/paper-tear.png via paper-tear-mask.svg). */
+/* Blank one-sheet art — full JPEG (no mask); tear sits above in a separate layer. */
 .poster__bg {
   position: absolute;
   inset: 0;
   z-index: 0;
   background: url("assets/Ad-Astra-Blank.jpg") center / cover no-repeat;
   pointer-events: none;
-  -webkit-mask-image: url("images/paper-tear-mask.svg");
-  -webkit-mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  -webkit-mask-position: center;
-  mask-image: url("images/paper-tear-mask.svg");
-  mask-size: 100% 100%;
-  mask-repeat: no-repeat;
-  mask-position: center;
-  mask-mode: luminance;
 }
 
-/* Torn-paper strip in the lower third (covers masked area + reinforces edge). */
+/*
+  Torn paper sits above the JPEG, clipped by .poster-frame overflow.
+  Flipped vs prior: vertical mirror so the strip reads correctly over the poster.
+*/
 .poster__tear {
   position: absolute;
   left: 0;
@@ -138,6 +123,8 @@ body {
   z-index: 1;
   pointer-events: none;
   background: url("images/paper-tear.png") center center / cover no-repeat;
+  transform: scaleY(-1);
+  transform-origin: bottom center;
 }
 
 /*
