@@ -76,10 +76,11 @@ body {
 .mobile-swipe-cue__chevron {
   width: 0.62rem;
   height: 0.62rem;
-  border-top: 2px solid rgba(255, 255, 255, 0.86);
-  border-right: 2px solid rgba(255, 255, 255, 0.86);
+  border-top: 2px solid rgba(10, 10, 10, 0.5);
+  border-right: 2px solid rgba(10, 10, 10, 0.5);
   transform: rotate(-45deg);
   animation: mobileSwipeUpCue 1.35s ease-in-out infinite;
+  filter: drop-shadow(0 0 2px rgba(255, 255, 255, 0.65));
 }
 
 .mobile-swipe-cue__chevron:nth-child(2) {
@@ -1168,13 +1169,13 @@ body {
   .mobile-swipe-cue {
     position: absolute;
     left: 50%;
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
     transform: translateX(-50%);
-    z-index: 6;
+    z-index: 30;
     display: inline-flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.3rem;
+    gap: 0.22rem;
     pointer-events: none;
     opacity: 1;
     transition: opacity 0.25s ease;
@@ -1242,11 +1243,45 @@ body {
     text-align: left;
   }
 
+  /* Force stack on touch/mobile so controls stay below animation */
+  .carousel-slide--transform #transform-tuner-root.transform-tuner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+  }
+
+  .carousel-slide--transform #transform-tuner-root .transform-tuner__visual {
+    order: 1 !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .carousel-slide--transform #transform-tuner-root .transform-tuner__panel {
+    order: 2 !important;
+    flex: 0 0 auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
   .carousel-slide--final .process-card__footnote--mobile-final {
     display: block;
     margin-top: 0.55rem;
     flex: 0 0 auto;
     text-align: center;
+  }
+}
+
+@media (max-width: 900px), (pointer: coarse) {
+  .carousel-slide--transform #transform-tuner-root.transform-tuner {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .carousel-slide--transform #transform-tuner-root .transform-tuner__visual,
+  .carousel-slide--transform #transform-tuner-root .transform-tuner__panel {
+    width: 100% !important;
+    max-width: 100% !important;
   }
 }
 

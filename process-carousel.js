@@ -12,6 +12,37 @@ function getMobileCarouselSlideHeight(viewport) {
   return viewport?.clientHeight || 0;
 }
 
+/**
+ * Reliable smooth scroll for mobile slide viewport (works consistently across browsers).
+ * @param {HTMLElement} viewport
+ * @param {number} targetTop
+ * @param {number} durationMs
+ * @param {() => void} [onDone]
+ */
+function animateViewportScrollTop(viewport, targetTop, durationMs, onDone) {
+  const startTop = viewport.scrollTop;
+  const delta = targetTop - startTop;
+  if (Math.abs(delta) < 1) {
+    viewport.scrollTop = targetTop;
+    if (onDone) onDone();
+    return;
+  }
+  const start = performance.now();
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+  function tick(now) {
+    const t = Math.min(1, (now - start) / durationMs);
+    viewport.scrollTop = startTop + delta * ease(t);
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else if (onDone) {
+      onDone();
+    }
+  }
+
+  requestAnimationFrame(tick);
+}
+
 const CODEPEN_EMBED_SRC =
   "https://codepen.io/wodniack/embed/XJbYWXx?default-tab=result&theme-id=dark";
 
@@ -786,6 +817,20 @@ function init() {
 
   const goTo = (next, opts = {}) => {
     slide = ((next % TOTAL_SLIDES) + TOTAL_SLIDES) % TOTAL_SLIDES;
+    const isMobile = window.matchMedia("(max-width: 768px)").matches;
+    const viewport = document.getElementById("carousel-viewport");
+
+    if (opts.forceSmoothMobileTop && isMobile && viewport) {
+      root.dataset.carouselScrollLock = "1";
+      applySlide(root, slide, { skipScroll: true });
+      animateViewportScrollTop(viewport, 0, 480, () => {
+        root.dataset.carouselScrollLock = "";
+        slide = 0;
+        applySlide(root, 0, { skipScroll: true });
+      });
+      return;
+    }
+
     applySlide(root, slide, opts);
   };
 
@@ -827,7 +872,7 @@ function init() {
       const n = Number.parseInt(el.getAttribute("data-carousel-go") || "0", 10);
       if (Number.isNaN(n)) return;
       if (n === 0 && window.matchMedia("(max-width: 768px)").matches) {
-        goTo(0, { scrollBehavior: "smooth" });
+        goTo(0, { forceSmoothMobileTop: true });
       } else {
         goTo(n);
       }
@@ -836,7 +881,7 @@ function init() {
 
   document.getElementById("carousel-back-to-top")?.addEventListener("click", () => {
     if (window.matchMedia("(max-width: 768px)").matches) {
-      goTo(0, { scrollBehavior: "smooth" });
+      goTo(0, { forceSmoothMobileTop: true });
     } else {
       goTo(0);
     }
