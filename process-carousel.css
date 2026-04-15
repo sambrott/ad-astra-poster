@@ -358,7 +358,10 @@ body {
   background: rgba(255, 255, 255, 0.88);
 }
 
-/* Enter deck — same circular chrome as .carousel-fab, expands to show label */
+/*
+  Enter deck — matches .carousel-fab look; label always visible (readable on light poster
+  area; hover-only hid text on touch and low-contrast over white).
+*/
 .carousel-fab--enter {
   position: fixed;
   right: max(12px, env(safe-area-inset-right, 0px));
@@ -369,38 +372,36 @@ body {
   flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 0;
-  width: 48px;
+  gap: 0.55rem;
+  width: auto;
+  max-width: min(280px, calc(100vw - 24px));
   height: 48px;
-  padding: 0;
+  padding: 0 16px 0 18px;
   margin: 0;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  background: rgba(8, 8, 8, 0.85);
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(0, 0, 0, 0.88);
   color: #fff;
   font-size: 1.1rem;
   cursor: pointer;
-  overflow: hidden;
+  overflow: visible;
+  box-shadow:
+    0 8px 28px rgba(0, 0, 0, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   transition:
-    width 0.35s var(--carousel-ease),
-    border-radius 0.3s ease,
     background 0.2s ease,
     border-color 0.2s ease,
-    padding 0.3s ease,
-    gap 0.3s ease,
-    box-shadow 0.25s ease;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
 }
 
 .carousel-fab--enter:hover,
 .carousel-fab--enter:focus-visible {
-  width: min(280px, 72vw);
-  border-radius: 999px;
-  padding: 0 16px 0 18px;
-  justify-content: flex-start;
-  gap: 0.65rem;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.28);
+  background: rgba(0, 0, 0, 0.94);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 10px 32px rgba(0, 0, 0, 0.55),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .carousel-fab--enter-icon {
@@ -414,18 +415,13 @@ body {
   letter-spacing: 0.14em;
   text-transform: uppercase;
   white-space: nowrap;
-  opacity: 0;
-  max-width: 0;
-  overflow: hidden;
-  transition:
-    opacity 0.28s ease,
-    max-width 0.35s var(--carousel-ease);
-}
-
-.carousel-fab--enter:hover .carousel-fab--enter-text,
-.carousel-fab--enter:focus-visible .carousel-fab--enter-text {
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
   opacity: 1;
-  max-width: 220px;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-carousel[data-carousel-slide="0"] .carousel-fab--enter {
