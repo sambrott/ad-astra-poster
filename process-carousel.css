@@ -82,7 +82,7 @@ body {
 .process-card__title {
   font-family: "IBM Plex Mono", monospace;
   font-weight: 600;
-  font-size: clamp(1.35rem, 3vw, 1.85rem);
+  font-size: clamp(1.62rem, 3.6vw, 2.22rem);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   margin: 0 0 1.25rem;
@@ -92,7 +92,7 @@ body {
 .process-card__body {
   font-family: "IBM Plex Mono", monospace;
   font-weight: 400;
-  font-size: clamp(0.8rem, 1.6vw, 0.95rem);
+  font-size: clamp(0.96rem, 1.92vw, 1.14rem);
   line-height: 1.65;
   color: rgba(240, 240, 240, 0.88);
   margin: 0 0 1.5rem;
@@ -517,7 +517,7 @@ body {
 
 .process-card__link {
   font-family: "IBM Plex Mono", monospace;
-  font-size: 0.85rem;
+  font-size: 1.02rem;
   color: #fff;
   text-decoration: underline;
   text-underline-offset: 0.2em;
@@ -852,13 +852,13 @@ body {
   }
 
   .carousel-slide--process .process-card__title {
-    font-size: clamp(0.92rem, 4vw, 1.15rem);
+    font-size: clamp(1.1rem, 4.8vw, 1.38rem);
     margin-bottom: 0.45rem;
     flex-shrink: 0;
   }
 
   .carousel-slide--process .process-card__body {
-    font-size: clamp(0.62rem, 2.65vw, 0.76rem);
+    font-size: clamp(0.74rem, 3.18vw, 0.92rem);
     line-height: 1.42;
     margin-bottom: 0.45rem;
     flex-shrink: 0;
@@ -893,7 +893,7 @@ body {
   }
 
   .carousel-slide--master .process-card__body {
-    font-size: clamp(0.54rem, 2.35vw, 0.7rem);
+    font-size: clamp(0.65rem, 2.82vw, 0.84rem);
     line-height: 1.36;
   }
 
@@ -981,7 +981,7 @@ body {
   }
 
   .carousel-slide--process .process-card__link {
-    font-size: 0.68rem;
+    font-size: 0.82rem;
   }
 
   /* Transform slide: stack tuner, keep panel scroll only if needed */
