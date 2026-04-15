@@ -246,6 +246,42 @@ function initMobileCarouselLayoutHealing(root) {
   }
 }
 
+/**
+ * Mount interactive slide content when those slides actually enter the viewport.
+ * Helps when mobile slide-index sync is momentarily off during snap/toolbar changes.
+ * @param {HTMLElement} root
+ */
+function initInteractiveSlideObserver(root) {
+  const viewport = document.getElementById("carousel-viewport");
+  if (!viewport || typeof IntersectionObserver === "undefined") return;
+
+  const slides = Array.from(root.querySelectorAll("#carousel-track > .carousel-slide"));
+  const watched = [
+    { index: 2, el: slides[2] },
+    { index: 3, el: slides[3] },
+    { index: 5, el: slides[5] },
+  ].filter((x) => x.el);
+
+  if (watched.length === 0) return;
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const hit = watched.find((w) => w.el === entry.target);
+        if (!hit) return;
+        ensureInteractiveSlideContent(hit.index);
+      });
+    },
+    {
+      root: viewport,
+      threshold: 0.35,
+    }
+  );
+
+  watched.forEach((w) => io.observe(w.el));
+}
+
 function mountFoundAssetDemo() {
   const mount = document.getElementById("found-asset-mount");
   if (!mount || mount.dataset.mounted === "1") return;
@@ -758,6 +794,7 @@ function init() {
     },
   });
 
+  initInteractiveSlideObserver(root);
   initMobileCarouselLayoutHealing(root);
 
   document.getElementById("carousel-enter")?.addEventListener("click", () => {
@@ -813,6 +850,7 @@ function init() {
   if (window.matchMedia("(max-width: 768px)").matches) {
     ensureInteractiveSlideContent(1);
     ensureInteractiveSlideContent(2);
+    ensureInteractiveSlideContent(3);
   }
 }
 

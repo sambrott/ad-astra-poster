@@ -774,9 +774,9 @@ body {
     min-height: 44px;
     padding: 0.55rem 1.1rem;
     border-radius: 999px;
-    border: 1px solid rgba(255, 255, 255, 0.28);
-    background: rgba(12, 12, 12, 0.92);
-    color: #fff;
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    background: #fff;
+    color: #0a0a0a;
     font-family: "IBM Plex Mono", monospace;
     font-size: 0.68rem;
     font-weight: 500;
@@ -784,7 +784,7 @@ body {
     text-transform: uppercase;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
-    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, 0.35);
   }
 
   .app-carousel[data-carousel-slide="5"] .carousel-back-to-top {
@@ -856,13 +856,13 @@ body {
   }
 
   .carousel-slide--process .process-card__title {
-    font-size: clamp(1.1rem, 4.8vw, 1.38rem);
+    font-size: clamp(1.25rem, 5.2vw, 1.58rem);
     margin-bottom: 0.45rem;
     flex-shrink: 0;
   }
 
   .carousel-slide--process .process-card__body {
-    font-size: clamp(0.74rem, 3.18vw, 0.92rem);
+    font-size: clamp(0.88rem, 3.45vw, 1.04rem);
     line-height: 1.42;
     margin-bottom: 0.45rem;
     flex-shrink: 0;
@@ -897,7 +897,7 @@ body {
   }
 
   .carousel-slide--master .process-card__body {
-    font-size: clamp(0.65rem, 2.82vw, 0.84rem);
+    font-size: clamp(0.82rem, 3.2vw, 0.98rem);
     line-height: 1.36;
   }
 
@@ -905,7 +905,7 @@ body {
     display: block;
     margin: 0.42rem 0 0;
     font-family: "IBM Plex Mono", monospace;
-    font-size: 0.58rem;
+    font-size: 0.68rem;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(255, 255, 255, 0.58);
@@ -927,7 +927,7 @@ body {
     margin-top: 0.3rem;
     padding: 0.28rem 0.4rem;
     line-height: 1.25;
-    font-size: 0.58rem;
+    font-size: 0.68rem;
   }
 
   /* Found Asset: side-by-side on narrow carousel (overrides 900px stack) */
@@ -958,7 +958,7 @@ body {
   }
 
   .carousel-slide--process .found-asset-panel__label {
-    font-size: 0.52rem;
+    font-size: 0.62rem;
     margin-bottom: 0;
     flex: 0 0 auto;
   }
@@ -997,7 +997,7 @@ body {
   }
 
   .carousel-slide--process .process-card__link {
-    font-size: 0.82rem;
+    font-size: 0.96rem;
   }
 
   /* Transform slide: stack tuner, keep panel scroll only if needed */
@@ -1058,11 +1058,11 @@ body {
   }
 
   .carousel-slide--process .tuner-field__label {
-    font-size: 0.58rem;
+    font-size: 0.7rem;
   }
 
   .carousel-slide--process .tuner-field__value {
-    font-size: 0.62rem;
+    font-size: 0.74rem;
   }
 
   /* Physical manipulation */
