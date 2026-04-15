@@ -111,9 +111,9 @@ body {
 }
 
 /*
-  Torn paper above the blank JPEG and above the wormhole strip so it actually paints
-  (stage was covering z-index:1). Clipped by .poster-frame overflow.
-  scaleY(-1) + origin bottom previously reflected the box below the frame → invisible.
+  Torn paper above the blank JPEG and above the wormhole strip.
+  Outer translate (--poster-tear-y) slides the strip out; inner keeps the vertical flip
+  without combining scale + translate in one matrix (avoids clipping bugs).
 */
 .poster__tear {
   position: absolute;
@@ -123,9 +123,24 @@ body {
   height: 33.333%;
   z-index: 4;
   pointer-events: none;
+  --poster-tear-y: 0%;
+  transform: translateY(var(--poster-tear-y));
+  transform-origin: center bottom;
+  will-change: transform;
+}
+
+.poster__tear-inner {
+  width: 100%;
+  height: 100%;
   background: url("images/paper-tear.png") center center / cover no-repeat;
   transform: scaleY(-1);
   transform-origin: center center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .poster__tear {
+    will-change: auto;
+  }
 }
 
 /*

@@ -47,6 +47,12 @@ const TYPE_RATIO_MOBILE = 0.77;
 const TYPE_DESKTOP_RATIO_REF = 1.22;
 /** Extra multiplier on mobile wormhole type (smaller on phones). */
 const MOBILE_TYPE_EXTRA_FACTOR = 0.88;
+/**
+ * Paper tear begins sliding down after this fraction of linear descent time (0–1).
+ * Movement completes by t=1 (aligned with end of easeInOutCubic descent).
+ */
+const TEAR_SLIDE_DESCENT_START_T = 0.72;
+
 /** Narrow viewports only: added to end translateY (px; negative raises the astronaut). */
 const ASTRONAUT_MOBILE_REST_DOWN_PX = -9;
 /** Desktop astronaut end nudge (px), added after geometry + ASTRONAUT_END_EXTRA_DOWN_PX. */
@@ -76,6 +82,10 @@ class BlackHole extends HTMLElement {
     this.astronautDepthEl =
       this.closest(".poster__stage")?.querySelector(".astronaut-float__depth") ||
       this.querySelector(".astronaut-float__depth");
+    this.posterTearEl = this.closest(".poster")?.querySelector(".poster__tear") || null;
+    this._tearReduceMotion =
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     /** @type {number | null} Cached translateY (px) at u=1 — stop just above director line */
     this.astronautTranslateYEnd = null;
     /** @type {number | null} performance.now() when descent began; null until first frame */
@@ -562,6 +572,19 @@ class BlackHole extends HTMLElement {
     el.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
     el.style.opacity = "1";
     el.style.visibility = "visible";
+
+    const tear = this.posterTearEl;
+    if (tear) {
+      let tearT = 0;
+      if (tLinear >= 1) {
+        tearT = 1;
+      } else if (tLinear > TEAR_SLIDE_DESCENT_START_T) {
+        const span = 1 - TEAR_SLIDE_DESCENT_START_T;
+        const raw = (tLinear - TEAR_SLIDE_DESCENT_START_T) / span;
+        tearT = this._tearReduceMotion ? raw : easeOutCubic(raw);
+      }
+      tear.style.setProperty("--poster-tear-y", `${tearT * 100}%`);
+    }
   }
 
   drawDiscs(ctx, iStart, iEnd) {
