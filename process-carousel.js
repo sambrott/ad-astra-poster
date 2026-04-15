@@ -3,6 +3,9 @@
  */
 
 const TOTAL_SLIDES = 6;
+/** Match one-shot poster animation cycle timing (see app.js ASTRONAUT_CYCLE_MS). */
+const POSTER_ANIM_COMPLETE_MS = 16000;
+const POSTER_PEEK_DELAY_MS = POSTER_ANIM_COMPLETE_MS + 600;
 
 /** iOS: viewport.clientHeight often ≠ each slide’s offsetHeight (toolbar/svh); use slide height for snap math. */
 function getMobileCarouselSlideHeight(viewport) {
@@ -54,6 +57,72 @@ function smoothScrollViewportToTop(viewport, root, onDone) {
   };
 
   requestAnimationFrame(poll);
+}
+
+/**
+ * One-time hint: after the poster animation completes, nudge slide 0 upward and back
+ * so users discover there are more sections below.
+ * @param {HTMLElement} root
+ * @param {() => number} getSlide
+ */
+function initPosterAutoPeekHint(root, getSlide) {
+  const viewport = document.getElementById("carousel-viewport");
+  if (!viewport) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  let userInteracted = false;
+  let fired = false;
+
+  const markInteracted = () => {
+    userInteracted = true;
+  };
+
+  window.addEventListener("wheel", markInteracted, { passive: true });
+  window.addEventListener("touchstart", markInteracted, { passive: true });
+  window.addEventListener("pointerdown", markInteracted, { passive: true });
+  window.addEventListener("keydown", markInteracted, { passive: true });
+
+  const animate = (from, to, durationMs, done) => {
+    const start = performance.now();
+    const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+    function tick(now) {
+      const t = Math.min(1, (now - start) / durationMs);
+      viewport.scrollTop = from + (to - from) * ease(t);
+      if (t < 1) {
+        requestAnimationFrame(tick);
+      } else if (done) {
+        done();
+      }
+    }
+
+    requestAnimationFrame(tick);
+  };
+
+  window.setTimeout(() => {
+    if (fired || userInteracted) return;
+    if (getSlide() !== 0) return;
+
+    fired = true;
+    const unit = Math.max(1, getMobileCarouselSlideHeight(viewport));
+    const peekDistance = Math.min(220, Math.max(84, unit * 0.16));
+    const startTop = viewport.scrollTop;
+    const targetTop = startTop + peekDistance;
+
+    root.dataset.carouselScrollLock = "1";
+    viewport.classList.add("is-programmatic-scroll");
+
+    animate(startTop, targetTop, 420, () => {
+      animate(targetTop, startTop, 520, () => {
+        viewport.classList.remove("is-programmatic-scroll");
+        root.dataset.carouselScrollLock = "";
+        viewport.scrollTop = 0;
+        if (typeof applySlide === "function") {
+          applySlide(root, 0, { skipScroll: true });
+        }
+      });
+    });
+  }, POSTER_PEEK_DELAY_MS);
 }
 
 const CODEPEN_EMBED_SRC =
@@ -451,16 +520,34 @@ function wireTunerControls() {
   });
   astroToggle?.addEventListener("input", sync);
   astroToggle?.addEventListener("change", sync);
-  astroSwitchTrack?.addEventListener("click", () => {
-    requestAnimationFrame(sync);
-  });
-  astroSwitchTrack?.addEventListener(
-    "touchend",
-    () => {
+  const touchLike =
+    window.matchMedia("(pointer: coarse)").matches ||
+    window.matchMedia("(max-width: 900px)").matches;
+  if (touchLike && astroSwitchTrack && astroToggle) {
+    astroSwitchTrack.addEventListener("pointerup", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      astroToggle.checked = !astroToggle.checked;
+      sync();
+    });
+    astroSwitchTrack.addEventListener("touchend", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      astroToggle.checked = !astroToggle.checked;
+      sync();
+    });
+  } else {
+    astroSwitchTrack?.addEventListener("click", () => {
       requestAnimationFrame(sync);
-    },
-    { passive: true }
-  );
+    });
+    astroSwitchTrack?.addEventListener(
+      "touchend",
+      () => {
+        requestAnimationFrame(sync);
+      },
+      { passive: true }
+    );
+  }
   bh.dataset.tunerWired = "1";
   sync();
 }
@@ -478,7 +565,7 @@ function applySlide(root, index, opts = {}) {
   root.style.setProperty("--slide-index", String(i));
 
   const viewport = document.getElementById("carousel-viewport");
-  if (!skipScroll && viewport && window.matchMedia("(max-width: 768px)").matches) {
+  if (!skipScroll && viewport) {
     const unit = getMobileCarouselSlideHeight(viewport);
     if (unit > 0) {
       root.dataset.carouselScrollLock = "1";
@@ -490,22 +577,13 @@ function applySlide(root, index, opts = {}) {
     }
   }
 
-  const dots = root.querySelectorAll(".carousel-dot");
-  dots.forEach((dot, di) => {
-    const on = di === i;
-    dot.classList.toggle("is-active", on);
-    dot.setAttribute("aria-current", on ? "true" : "false");
-  });
-
   const fabs = document.getElementById("carousel-fabs");
   if (fabs) {
     fabs.setAttribute("aria-hidden", i === 0 ? "true" : "false");
   }
 
   ensureInteractiveSlideContent(i);
-  if (window.matchMedia("(max-width: 768px)").matches) {
-    ensureInteractiveSlideContent(i + 1);
-  }
+  ensureInteractiveSlideContent(i + 1);
 }
 
 /**
@@ -517,7 +595,6 @@ function initMobileScrollSnapSync(root, api) {
   const viewport = document.getElementById("carousel-viewport");
   if (!viewport) return;
 
-  const mq = window.matchMedia("(max-width: 768px)");
   const slides = Array.from(root.querySelectorAll("#carousel-track > .carousel-slide"));
 
   let syncRaf = 0;
@@ -526,7 +603,7 @@ function initMobileScrollSnapSync(root, api) {
    * overlaps the viewport most (same coordinate space as BlackHole.getBoundingClientRect).
    */
   function syncFromScroll() {
-    if (!mq.matches || root.dataset.carouselScrollLock === "1") return;
+    if (root.dataset.carouselScrollLock === "1") return;
     cancelAnimationFrame(syncRaf);
     syncRaf = requestAnimationFrame(() => {
       const vr = viewport.getBoundingClientRect();
@@ -553,7 +630,7 @@ function initMobileScrollSnapSync(root, api) {
       if (idx !== api.getSlide()) {
         api.setSlide(idx);
         applySlide(root, idx, { skipScroll: true });
-      } else if (mq.matches) {
+      } else {
         ensureInteractiveSlideContent(idx);
       }
     });
@@ -562,7 +639,6 @@ function initMobileScrollSnapSync(root, api) {
   viewport.addEventListener("scroll", syncFromScroll, { passive: true });
 
   window.addEventListener("resize", () => {
-    if (!mq.matches) return;
     enforceMobileTransformLayout();
     const si = api.getSlide();
     const unit = Math.max(1, getMobileCarouselSlideHeight(viewport));
@@ -576,7 +652,6 @@ function initMobileScrollSnapSync(root, api) {
   window.addEventListener(
     "pageshow",
     () => {
-      if (!mq.matches) return;
       requestAnimationFrame(() => {
         ensureInteractiveSlideContent(api.getSlide());
       });
@@ -947,13 +1022,6 @@ function init() {
     }
   });
 
-  root.querySelectorAll(".carousel-dot").forEach((dot) => {
-    dot.addEventListener("click", () => {
-      const n = Number.parseInt(dot.getAttribute("data-slide") || "0", 10);
-      if (!Number.isNaN(n)) goTo(n);
-    });
-  });
-
   root.querySelectorAll("[data-carousel-go]").forEach((el) => {
     el.addEventListener("click", () => {
       const n = Number.parseInt(el.getAttribute("data-carousel-go") || "0", 10);
@@ -989,6 +1057,7 @@ function init() {
   });
 
   applySlide(root, 0);
+  initPosterAutoPeekHint(root, () => slide);
 
   if (window.matchMedia("(max-width: 768px)").matches) {
     ensureInteractiveSlideContent(1);

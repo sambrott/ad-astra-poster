@@ -22,10 +22,19 @@ body {
 }
 
 .carousel-viewport {
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: y mandatory;
   width: 100%;
   min-height: 100dvh;
   min-height: 100svh;
+  height: 100dvh;
+  height: 100svh;
+  max-height: 100dvh;
+  max-height: 100svh;
+  touch-action: auto;
 }
 
 .carousel-viewport.is-programmatic-scroll {
@@ -34,12 +43,14 @@ body {
 
 .carousel-track {
   display: flex;
-  width: 600vw;
+  flex-direction: column;
+  width: 100vw;
+  min-width: 0;
   min-height: 100dvh;
   min-height: 100svh;
-  transform: translateX(calc(-1 * var(--slide-index) * 100vw));
-  transition: transform var(--carousel-dur) var(--carousel-ease);
-  will-change: transform;
+  transform: none !important;
+  transition: none !important;
+  will-change: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -53,17 +64,31 @@ body {
 }
 
 .carousel-slide {
-  flex: 0 0 100vw;
+  flex: 0 0 100dvh;
+  flex: 0 0 100svh;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
   width: 100vw;
   min-height: 100dvh;
   min-height: 100svh;
+  height: 100dvh;
+  height: 100svh;
+  max-height: 100dvh;
+  max-height: 100svh;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 /* Poster slide: keep existing poster-page layout */
+.carousel-slide--poster {
+  --poster-page-pad: clamp(8px, 1.8vmin, 24px);
+  position: relative;
+}
+
 .carousel-slide--poster .poster-page {
-  min-height: 100dvh;
-  min-height: 100svh;
+  min-height: 100%;
+  height: 100%;
+  justify-content: center;
 }
 
 .mobile-swipe-cue {
@@ -80,11 +105,11 @@ body {
 .mobile-swipe-cue__chevron {
   width: 0.62rem;
   height: 0.62rem;
-  border-top: 2px solid rgba(255, 255, 255, 0.92);
-  border-right: 2px solid rgba(255, 255, 255, 0.92);
+  border-top: 2px solid rgba(0, 0, 0, 0.6);
+  border-right: 2px solid rgba(0, 0, 0, 0.6);
   transform: rotate(-45deg);
   animation: mobileSwipeUpCue 1.35s ease-in-out infinite;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.65));
+  filter: drop-shadow(0 1px 2px rgba(255, 255, 255, 0.55));
 }
 
 .mobile-swipe-cue__chevron:nth-child(2) {
@@ -126,15 +151,34 @@ body {
   }
 }
 
+.carousel-slide--poster .mobile-swipe-cue {
+  position: absolute;
+  left: 50%;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 30;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.22rem;
+  pointer-events: none;
+  opacity: 0.8;
+  transition: opacity 0.25s ease;
+}
+
+.app-carousel:not([data-carousel-slide="0"]) .mobile-swipe-cue {
+  opacity: 0;
+}
+
 /* Process slides — extra bottom space for centered dot rail */
 .carousel-slide--process {
   display: flex;
-  align-items: flex-start;
+  flex-direction: column;
+  align-items: stretch;
   justify-content: center;
   padding: clamp(24px, 5vmin, 56px) clamp(16px, 4vw, 48px)
-    calc(112px + env(safe-area-inset-bottom, 0px));
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
+    calc(40px + env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
 }
 
 .process-card {
@@ -1166,27 +1210,8 @@ body {
     justify-content: center;
   }
 
-  .carousel-slide--poster {
-    position: relative;
-  }
-
-  .mobile-swipe-cue {
-    position: absolute;
-    left: 50%;
-    bottom: calc(18px + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
-    z-index: 30;
-    display: inline-flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.22rem;
-    pointer-events: none;
+  .carousel-slide--poster .mobile-swipe-cue {
     opacity: 1;
-    transition: opacity 0.25s ease;
-  }
-
-  .app-carousel:not([data-carousel-slide="0"]) .mobile-swipe-cue {
-    opacity: 0;
   }
 
   .carousel-fab--enter,
