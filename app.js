@@ -52,6 +52,11 @@ const MOBILE_TYPE_EXTRA_FACTOR = 0.88;
  * Movement completes by t=1 (aligned with end of easeInOutCubic descent).
  */
 const TEAR_SLIDE_DESCENT_START_T = 0.66;
+/**
+ * On compact viewports the poster is shorter in px; tear uses % height so it moves fewer px/s.
+ * Scale progress by refHeight/posterHeight (capped) so slide speed matches desktop reference.
+ */
+const TEAR_MOBILE_SPEED_MUL_CAP = 4;
 
 /** Narrow viewports only: added to end translateY (px; negative raises the astronaut). */
 const ASTRONAUT_MOBILE_REST_DOWN_PX = -9;
@@ -92,6 +97,8 @@ class BlackHole extends HTMLElement {
     this.astronautDescentStartMs = null;
     /** @type {number | null} when idle float phase starts (sin=0) — avoids jitter at handoff */
     this.astronautIdleStartMs = null;
+    /** Poster height (px); set in resize() for tear speed scaling on mobile. */
+    this._posterHeightPx = REF_POSTER_HEIGHT_PX;
     this.ready();
   }
 
@@ -146,6 +153,7 @@ class BlackHole extends HTMLElement {
     const poster = this.closest(".poster");
     if (poster) {
       const ph = poster.getBoundingClientRect().height;
+      this._posterHeightPx = ph;
       const gb = STAGE_BOTTOM_MUL;
       const baseBottom = ph * (0.5 - STAGE_HALF_OFFSET_BASE_PX / REF_POSTER_HEIGHT_PX);
       const bottomExtra = (gb - 1) * ph * TUNE_STAGE_Y_BOTTOM_FRAC;
@@ -575,12 +583,23 @@ class BlackHole extends HTMLElement {
 
     const tear = this.posterTearEl;
     if (tear) {
+      const hints = this._layoutHints ?? this.layoutHints();
+      let tearSpeedMul = 1;
+      if (hints.compact) {
+        const ph = this._posterHeightPx ?? REF_POSTER_HEIGHT_PX;
+        tearSpeedMul = Math.min(
+          TEAR_MOBILE_SPEED_MUL_CAP,
+          Math.max(1, REF_POSTER_HEIGHT_PX / Math.max(1, ph)),
+        );
+      }
       let tearT = 0;
       if (tLinear >= 1) {
         tearT = 1;
       } else if (tLinear > TEAR_SLIDE_DESCENT_START_T) {
         const span = 1 - TEAR_SLIDE_DESCENT_START_T;
-        const raw = (tLinear - TEAR_SLIDE_DESCENT_START_T) / span;
+        let raw = (tLinear - TEAR_SLIDE_DESCENT_START_T) / span;
+        if (hints.compact) raw *= tearSpeedMul;
+        raw = Math.min(1, raw);
         tearT = this._tearReduceMotion ? raw : easeOutCubic(raw);
       }
       tear.style.setProperty("--poster-tear-y", `${tearT * 100}%`);
