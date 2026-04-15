@@ -123,7 +123,6 @@ function layoutBlackHoleInMount(mount) {
     if (bh && typeof bh.resize === "function") {
       bh.resize();
     }
-    window.dispatchEvent(new Event("resize"));
   };
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -135,16 +134,6 @@ function layoutBlackHoleInMount(mount) {
       }
     });
   });
-}
-
-/** Re-measure every wormhole after scroll / visibility changes (mobile snap deck). */
-function flushAllCarouselBlackHoles() {
-  document.querySelectorAll("#app-carousel black-hole").forEach((el) => {
-    if (typeof el.resize === "function") {
-      el.resize();
-    }
-  });
-  window.dispatchEvent(new Event("resize"));
 }
 
 function layoutFinalCompositionMount() {
@@ -156,7 +145,6 @@ function layoutFinalCompositionMount() {
         el.resize();
       }
     });
-    window.dispatchEvent(new Event("resize"));
   };
   requestAnimationFrame(() => {
     requestAnimationFrame(() => {
@@ -170,46 +158,42 @@ function layoutFinalCompositionMount() {
   });
 }
 
-/** Mobile reliability: eagerly mount heavy process visuals so snap timing never skips lazy mounts. */
-function initMobileInteractiveHydration() {
-  const mq = window.matchMedia("(max-width: 768px)");
-
-  const hydrate = () => {
-    if (!mq.matches) return;
-
+/**
+ * Mobile reliability without preloading every heavy slide:
+ * mount only active slide's interactive content, plus one-slide lookahead.
+ * @param {number} index
+ */
+function ensureInteractiveSlideContent(index) {
+  if (index === 2) {
     mountFoundAssetDemo();
+    layoutBlackHoleInMount(document.getElementById("found-asset-mount"));
+    return;
+  }
+  if (index === 3) {
     mountTransformTuner();
-    mountFinalComposition();
     wireTunerControls();
-
-    const foundMount = document.getElementById("found-asset-mount");
-    const tunerMount = document.getElementById("transform-tuner-mount");
-
-    layoutBlackHoleInMount(foundMount);
-    layoutBlackHoleInMount(tunerMount);
+    layoutBlackHoleInMount(document.getElementById("transform-tuner-mount"));
+    return;
+  }
+  if (index === 5) {
+    mountFinalComposition();
     layoutFinalCompositionMount();
-    flushAllCarouselBlackHoles();
-  };
+  }
+}
 
-  const hydrateSoon = () => {
-    requestAnimationFrame(() => {
-      hydrate();
-      setTimeout(hydrate, 150);
-      setTimeout(hydrate, 420);
-    });
-  };
-
-  hydrateSoon();
-  window.addEventListener("resize", hydrateSoon, { passive: true });
-  window.addEventListener(
-    "pageshow",
-    () => {
-      hydrateSoon();
-    },
-    { passive: true }
-  );
-  document.addEventListener("visibilitychange", () => {
-    if (!document.hidden) hydrateSoon();
+/**
+ * Resize only visible black holes within the current viewport to avoid scroll jank.
+ * @param {HTMLElement} viewport
+ */
+function flushVisibleCarouselBlackHoles(viewport) {
+  const vr = viewport.getBoundingClientRect();
+  document.querySelectorAll("#app-carousel black-hole").forEach((el) => {
+    const r = el.getBoundingClientRect();
+    const overlap = Math.max(0, Math.min(r.bottom, vr.bottom) - Math.max(r.top, vr.top));
+    if (overlap <= 0) return;
+    if (typeof el.resize === "function") {
+      el.resize();
+    }
   });
 }
 
@@ -229,7 +213,7 @@ function initMobileCarouselLayoutHealing(root) {
     if (!mq.matches) return;
     cancelAnimationFrame(healRaf);
     healRaf = requestAnimationFrame(() => {
-      flushAllCarouselBlackHoles();
+      flushVisibleCarouselBlackHoles(viewport);
     });
   }
 
@@ -314,8 +298,8 @@ function wireTunerControls() {
     if (bh.render) {
       bh.astronautTranslateYEnd = null;
       bh.cacheAstronautDescentEnd();
+      bh.resize();
     }
-    window.dispatchEvent(new Event("resize"));
   };
 
   [type, motion, hole, astro].forEach((el) => {
@@ -361,28 +345,9 @@ function applySlide(root, index, opts = {}) {
     fabs.setAttribute("aria-hidden", i === 0 ? "true" : "false");
   }
 
-  if (i === 2) {
-    mountFoundAssetDemo();
-    layoutBlackHoleInMount(document.getElementById("found-asset-mount"));
-  }
-  if (i === 3) {
-    const tunerWasMounted =
-      document.getElementById("transform-tuner-mount")?.dataset.mounted === "1";
-    mountTransformTuner();
-    if (tunerWasMounted) {
-      requestAnimationFrame(() => {
-        wireTunerControls();
-        layoutBlackHoleInMount(document.getElementById("transform-tuner-mount"));
-      });
-    }
-  }
-  if (i === 5) {
-    const finalWasMounted =
-      document.getElementById("final-composition-mount")?.dataset.mounted === "1";
-    mountFinalComposition();
-    if (finalWasMounted) {
-      layoutFinalCompositionMount();
-    }
+  ensureInteractiveSlideContent(i);
+  if (window.matchMedia("(max-width: 768px)").matches) {
+    ensureInteractiveSlideContent(i + 1);
   }
 }
 
@@ -431,6 +396,8 @@ function initMobileScrollSnapSync(root, api) {
       if (idx !== api.getSlide()) {
         api.setSlide(idx);
         applySlide(root, idx, { skipScroll: true });
+      } else if (mq.matches) {
+        ensureInteractiveSlideContent(idx);
       }
     });
   }
@@ -452,7 +419,9 @@ function initMobileScrollSnapSync(root, api) {
     "pageshow",
     () => {
       if (!mq.matches) return;
-      requestAnimationFrame(() => flushAllCarouselBlackHoles());
+      requestAnimationFrame(() => {
+        ensureInteractiveSlideContent(api.getSlide());
+      });
     },
     { passive: true }
   );
@@ -789,7 +758,6 @@ function init() {
     },
   });
 
-  initMobileInteractiveHydration();
   initMobileCarouselLayoutHealing(root);
 
   document.getElementById("carousel-enter")?.addEventListener("click", () => {
@@ -843,11 +811,8 @@ function init() {
   applySlide(root, 0);
 
   if (window.matchMedia("(max-width: 768px)").matches) {
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        flushAllCarouselBlackHoles();
-      });
-    });
+    ensureInteractiveSlideContent(1);
+    ensureInteractiveSlideContent(2);
   }
 }
 
