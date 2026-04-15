@@ -159,6 +159,17 @@ class BlackHole extends HTMLElement {
   }
 
   resize() {
+    const rect = this.getBoundingClientRect();
+    /** Mobile scroll-snap / first paint can report 0×0; retry before building discs (Safari / iOS). */
+    if (rect.width < 2 || rect.height < 2) {
+      this._resizeZeroRetry = (this._resizeZeroRetry || 0) + 1;
+      if (this._resizeZeroRetry < 48) {
+        requestAnimationFrame(() => this.resize());
+      }
+      return;
+    }
+    this._resizeZeroRetry = 0;
+
     const now = performance.now();
     const prevStart = this.astronautDescentStartMs;
     const preservedElapsed = prevStart != null ? now - prevStart : 0;
@@ -178,20 +189,20 @@ class BlackHole extends HTMLElement {
       }
     }
 
-    const rect = this.getBoundingClientRect();
+    const layoutRect = this.getBoundingClientRect();
     const dpi = Math.min(MAX_DPR, window.devicePixelRatio || 1);
     this.render = {
-      width: rect.width,
-      height: rect.height,
+      width: layoutRect.width,
+      height: layoutRect.height,
       dpi,
-      x: rect.width * 0.5,
+      x: layoutRect.width * 0.5,
       y: 0,
-      w: rect.width,
-      h: rect.height,
+      w: layoutRect.width,
+      h: layoutRect.height,
     };
     this._layoutHints = this.layoutHints();
-    const cw = Math.max(1, Math.floor(rect.width * dpi));
-    const ch = Math.max(1, Math.floor(rect.height * dpi));
+    const cw = Math.max(1, Math.floor(layoutRect.width * dpi));
+    const ch = Math.max(1, Math.floor(layoutRect.height * dpi));
     this.canvasBack.width = cw;
     this.canvasBack.height = ch;
     this.canvasFront.width = cw;

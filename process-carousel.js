@@ -3,6 +3,15 @@
  */
 
 const TOTAL_SLIDES = 6;
+
+/** iOS: viewport.clientHeight often ≠ each slide’s offsetHeight (toolbar/svh); use slide height for snap math. */
+function getMobileCarouselSlideHeight(viewport) {
+  const slide = viewport?.querySelector("#carousel-track .carousel-slide");
+  const h = slide?.offsetHeight;
+  if (h && h > 0) return h;
+  return viewport?.clientHeight || 0;
+}
+
 const CODEPEN_EMBED_SRC =
   "https://codepen.io/wodniack/embed/XJbYWXx?default-tab=result&theme-id=dark";
 
@@ -197,22 +206,17 @@ function initMobileCarouselLayoutHealing(root) {
     /* scrollend not supported */
   }
 
-  const io = new IntersectionObserver(
-    (entries) => {
+  if (typeof ResizeObserver !== "undefined") {
+    const ro = new ResizeObserver(() => {
       if (!mq.matches) return;
-      for (const e of entries) {
-        if (e.isIntersecting && e.intersectionRatio > 0.08) {
-          requestAnimationFrame(heal);
-          break;
-        }
-      }
-    },
-    { root: viewport, threshold: [0, 0.1, 0.25] }
-  );
+      heal();
+    });
+    ro.observe(viewport);
+  }
 
-  root.querySelectorAll("#carousel-track .carousel-slide").forEach((slide) => {
-    io.observe(slide);
-  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", heal, { passive: true });
+  }
 }
 
 function mountFoundAssetDemo() {
@@ -292,13 +296,13 @@ function applySlide(root, index, opts = {}) {
 
   const viewport = document.getElementById("carousel-viewport");
   if (!skipScroll && viewport && window.matchMedia("(max-width: 768px)").matches) {
-    const h = viewport.clientHeight;
-    if (h > 0) {
+    const unit = getMobileCarouselSlideHeight(viewport);
+    if (unit > 0) {
       root.dataset.carouselScrollLock = "1";
-      viewport.scrollTo({ top: i * h, behavior: "auto" });
+      viewport.scrollTo({ top: i * unit, behavior: "auto" });
       window.setTimeout(() => {
         root.dataset.carouselScrollLock = "";
-      }, 100);
+      }, 220);
     }
   }
 
@@ -349,17 +353,43 @@ function initMobileScrollSnapSync(root, api) {
   if (!viewport) return;
 
   const mq = window.matchMedia("(max-width: 768px)");
+  const slides = Array.from(root.querySelectorAll("#carousel-track > .carousel-slide"));
 
+  let syncRaf = 0;
+  /**
+   * iOS: scrollTop/clientHeight can disagree with slide offsetHeights. Pick the slide that
+   * overlaps the viewport most (same coordinate space as BlackHole.getBoundingClientRect).
+   */
   function syncFromScroll() {
     if (!mq.matches || root.dataset.carouselScrollLock === "1") return;
-    const h = viewport.clientHeight;
-    if (h < 1) return;
-    const idx = Math.round(viewport.scrollTop / h);
-    const clamped = Math.min(TOTAL_SLIDES - 1, Math.max(0, idx));
-    if (clamped !== api.getSlide()) {
-      api.setSlide(clamped);
-      applySlide(root, clamped, { skipScroll: true });
-    }
+    cancelAnimationFrame(syncRaf);
+    syncRaf = requestAnimationFrame(() => {
+      const vr = viewport.getBoundingClientRect();
+      let bestI = 0;
+      let bestScore = 0;
+      slides.forEach((slide, i) => {
+        const r = slide.getBoundingClientRect();
+        const overlap = Math.max(0, Math.min(r.bottom, vr.bottom) - Math.max(r.top, vr.top));
+        const score = overlap / Math.max(1, r.height);
+        if (score > bestScore) {
+          bestScore = score;
+          bestI = i;
+        }
+      });
+
+      const unit = Math.max(1, getMobileCarouselSlideHeight(viewport));
+      const idxFromScroll = Math.min(
+        TOTAL_SLIDES - 1,
+        Math.max(0, Math.round(viewport.scrollTop / unit))
+      );
+
+      const idx = bestScore > 0.32 ? bestI : idxFromScroll;
+
+      if (idx !== api.getSlide()) {
+        api.setSlide(idx);
+        applySlide(root, idx, { skipScroll: true });
+      }
+    });
   }
 
   viewport.addEventListener("scroll", syncFromScroll, { passive: true });
@@ -367,12 +397,22 @@ function initMobileScrollSnapSync(root, api) {
   window.addEventListener("resize", () => {
     if (!mq.matches) return;
     const si = api.getSlide();
+    const unit = Math.max(1, getMobileCarouselSlideHeight(viewport));
     root.dataset.carouselScrollLock = "1";
-    viewport.scrollTo({ top: si * viewport.clientHeight, behavior: "auto" });
+    viewport.scrollTo({ top: si * unit, behavior: "auto" });
     window.setTimeout(() => {
       root.dataset.carouselScrollLock = "";
-    }, 120);
+    }, 220);
   });
+
+  window.addEventListener(
+    "pageshow",
+    () => {
+      if (!mq.matches) return;
+      requestAnimationFrame(() => flushAllCarouselBlackHoles());
+    },
+    { passive: true }
+  );
 }
 
 /**
@@ -757,6 +797,14 @@ function init() {
   });
 
   applySlide(root, 0);
+
+  if (window.matchMedia("(max-width: 768px)").matches) {
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        flushAllCarouselBlackHoles();
+      });
+    });
+  }
 }
 
 init();
