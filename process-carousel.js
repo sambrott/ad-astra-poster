@@ -29,34 +29,41 @@ function smoothScrollViewportToTop(viewport, root, onDone) {
     return;
   }
 
-  const startedAt = performance.now();
-  const maxMs = 900;
+  const durationMs = 780;
+  const startAt = performance.now();
   let done = false;
+
+  // Ease-in-out for a gentler settle at the end.
+  const easeInOut = (t) =>
+    t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
   const finish = () => {
     if (done) return;
     done = true;
-    viewport.classList.remove("is-programmatic-scroll");
-    root.dataset.carouselScrollLock = "";
     viewport.scrollTop = 0;
-    if (onDone) onDone();
+    // Re-enable snap after the frame that lands at top to avoid an end-jump.
+    requestAnimationFrame(() => {
+      viewport.classList.remove("is-programmatic-scroll");
+      root.dataset.carouselScrollLock = "";
+      if (onDone) onDone();
+    });
   };
 
   root.dataset.carouselScrollLock = "1";
   viewport.classList.add("is-programmatic-scroll");
-  viewport.scrollTo({ top: 0, behavior: "smooth" });
 
-  const poll = () => {
+  const tick = (now) => {
     if (done) return;
-    const elapsed = performance.now() - startedAt;
-    if (viewport.scrollTop <= 1 || elapsed >= maxMs) {
+    const t = Math.min(1, (now - startAt) / durationMs);
+    viewport.scrollTop = startTop * (1 - easeInOut(t));
+    if (t < 1) {
+      requestAnimationFrame(tick);
+    } else {
       finish();
-      return;
     }
-    requestAnimationFrame(poll);
   };
 
-  requestAnimationFrame(poll);
+  requestAnimationFrame(tick);
 }
 
 /**
