@@ -51,7 +51,7 @@ const MOBILE_TYPE_EXTRA_FACTOR = 0.88;
  * Paper tear begins sliding down after this fraction of linear descent time (0–1).
  * Movement completes by t=1 (aligned with end of easeInOutCubic descent).
  */
-const TEAR_SLIDE_DESCENT_START_T = 0.72;
+const TEAR_SLIDE_DESCENT_START_T = 0.66;
 
 /** Narrow viewports only: added to end translateY (px; negative raises the astronaut). */
 const ASTRONAUT_MOBILE_REST_DOWN_PX = -9;
