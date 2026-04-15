@@ -13,34 +13,47 @@ function getMobileCarouselSlideHeight(viewport) {
 }
 
 /**
- * Reliable smooth scroll for mobile slide viewport (works consistently across browsers).
+ * Smoothly return viewport to top without scroll-snap fighting the animation.
  * @param {HTMLElement} viewport
- * @param {number} targetTop
- * @param {number} durationMs
+ * @param {HTMLElement} root
  * @param {() => void} [onDone]
  */
-function animateViewportScrollTop(viewport, targetTop, durationMs, onDone) {
+function smoothScrollViewportToTop(viewport, root, onDone) {
   const startTop = viewport.scrollTop;
-  const delta = targetTop - startTop;
-  if (Math.abs(delta) < 1) {
-    viewport.scrollTop = targetTop;
+  if (startTop <= 1) {
+    viewport.scrollTop = 0;
     if (onDone) onDone();
     return;
   }
-  const start = performance.now();
-  const ease = (t) => 1 - Math.pow(1 - t, 3);
 
-  function tick(now) {
-    const t = Math.min(1, (now - start) / durationMs);
-    viewport.scrollTop = startTop + delta * ease(t);
-    if (t < 1) {
-      requestAnimationFrame(tick);
-    } else if (onDone) {
-      onDone();
+  const startedAt = performance.now();
+  const maxMs = 900;
+  let done = false;
+
+  const finish = () => {
+    if (done) return;
+    done = true;
+    viewport.classList.remove("is-programmatic-scroll");
+    root.dataset.carouselScrollLock = "";
+    viewport.scrollTop = 0;
+    if (onDone) onDone();
+  };
+
+  root.dataset.carouselScrollLock = "1";
+  viewport.classList.add("is-programmatic-scroll");
+  viewport.scrollTo({ top: 0, behavior: "smooth" });
+
+  const poll = () => {
+    if (done) return;
+    const elapsed = performance.now() - startedAt;
+    if (viewport.scrollTop <= 1 || elapsed >= maxMs) {
+      finish();
+      return;
     }
-  }
+    requestAnimationFrame(poll);
+  };
 
-  requestAnimationFrame(tick);
+  requestAnimationFrame(poll);
 }
 
 const CODEPEN_EMBED_SRC =
@@ -885,10 +898,8 @@ function init() {
     const viewport = document.getElementById("carousel-viewport");
 
     if (opts.forceSmoothMobileTop && isMobile && viewport) {
-      root.dataset.carouselScrollLock = "1";
       applySlide(root, slide, { skipScroll: true });
-      animateViewportScrollTop(viewport, 0, 480, () => {
-        root.dataset.carouselScrollLock = "";
+      smoothScrollViewportToTop(viewport, root, () => {
         slide = 0;
         applySlide(root, 0, { skipScroll: true });
       });

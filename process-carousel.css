@@ -28,6 +28,10 @@ body {
   min-height: 100svh;
 }
 
+.carousel-viewport.is-programmatic-scroll {
+  scroll-snap-type: none !important;
+}
+
 .carousel-track {
   display: flex;
   width: 600vw;
