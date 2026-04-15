@@ -103,14 +103,35 @@ const TRANSFORM_TUNER_MARKUP = `
 </div>
 `.trim();
 
+/**
+ * Black-hole canvases size from layout; off-screen or freshly mounted nodes can read 0×0 until layout settles.
+ * @param {HTMLElement | null} mount
+ */
+function layoutBlackHoleInMount(mount) {
+  if (!mount) return;
+  const bh = mount.querySelector("black-hole");
+  const flush = () => {
+    if (bh && typeof bh.resize === "function") {
+      bh.resize();
+    }
+    window.dispatchEvent(new Event("resize"));
+  };
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      flush();
+      if (window.matchMedia("(max-width: 768px)").matches) {
+        setTimeout(flush, 100);
+        setTimeout(flush, 350);
+      }
+    });
+  });
+}
+
 function mountFoundAssetDemo() {
   const mount = document.getElementById("found-asset-mount");
   if (!mount || mount.dataset.mounted === "1") return;
   mount.innerHTML = HOLE_MARKUP;
   mount.dataset.mounted = "1";
-  requestAnimationFrame(() => {
-    window.dispatchEvent(new Event("resize"));
-  });
 }
 
 function mountTransformTuner() {
@@ -120,7 +141,7 @@ function mountTransformTuner() {
   mount.dataset.mounted = "1";
   requestAnimationFrame(() => {
     wireTunerControls();
-    window.dispatchEvent(new Event("resize"));
+    layoutBlackHoleInMount(mount);
   });
 }
 
@@ -209,9 +230,18 @@ function applySlide(root, index, opts = {}) {
 
   if (i === 2) {
     mountFoundAssetDemo();
+    layoutBlackHoleInMount(document.getElementById("found-asset-mount"));
   }
   if (i === 3) {
+    const tunerWasMounted =
+      document.getElementById("transform-tuner-mount")?.dataset.mounted === "1";
     mountTransformTuner();
+    if (tunerWasMounted) {
+      requestAnimationFrame(() => {
+        wireTunerControls();
+        layoutBlackHoleInMount(document.getElementById("transform-tuner-mount"));
+      });
+    }
   }
   if (i === 5) {
     mountFinalComposition();
@@ -613,6 +643,10 @@ function init() {
       const n = Number.parseInt(el.getAttribute("data-carousel-go") || "0", 10);
       if (!Number.isNaN(n)) goTo(n);
     });
+  });
+
+  document.getElementById("carousel-back-to-top")?.addEventListener("click", () => {
+    goTo(0);
   });
 
   root.addEventListener("keydown", (e) => {

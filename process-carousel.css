@@ -693,6 +693,11 @@ body {
   display: none;
 }
 
+/* Mobile-only control; hidden on desktop (see max-width 768 block). */
+.carousel-back-to-top {
+  display: none;
+}
+
 /* Dots — centered bottom */
 .carousel-dots {
   position: fixed;
@@ -744,9 +749,44 @@ body {
 
 /*
   Mobile (≤768px): vertical scroll-snap deck — one slide per viewport, swipe up/down.
-  Arrow FABs hidden; dots remain. Desktop horizontal track + transforms are unchanged above.
+  Arrow FABs hidden. Desktop horizontal track + transforms are unchanged above.
 */
 @media (max-width: 768px) {
+  .carousel-dots {
+    display: none !important;
+  }
+
+  .carousel-back-to-top {
+    display: none;
+    position: fixed;
+    left: 50%;
+    bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 55;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    background: rgba(12, 12, 12, 0.92);
+    color: #fff;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  }
+
+  .app-carousel[data-carousel-slide="5"] .carousel-back-to-top {
+    display: inline-flex;
+  }
+
   /*
     One viewport per slide (iPhone-sized). Process slides do not scroll internally so
     vertical swipes go to this element and advance scroll-snap. Nested scrollables use
@@ -799,7 +839,7 @@ body {
     justify-content: flex-start;
     overflow: hidden;
     padding: max(10px, env(safe-area-inset-top, 0px)) clamp(10px, 3.5vw, 20px)
-      calc(88px + env(safe-area-inset-bottom, 0px));
+      calc(20px + env(safe-area-inset-bottom, 0px));
   }
 
   .carousel-slide--process .process-card {
@@ -836,15 +876,19 @@ body {
     margin-bottom: 0;
     flex: 1 1 auto;
     min-height: 0;
-    align-items: stretch;
+    align-items: start;
   }
 
   .carousel-slide--master .process-figure {
     display: flex;
     flex-direction: column;
+    justify-content: flex-start;
+    align-items: stretch;
+    width: 100%;
     min-width: 0;
     min-height: 0;
-    overflow: hidden;
+    height: auto;
+    overflow: visible;
   }
 
   .carousel-slide--master .process-card__body {
@@ -853,8 +897,7 @@ body {
   }
 
   .carousel-slide--master .process-figure__img {
-    flex: 1 1 auto;
-    min-height: 0;
+    flex: 0 0 auto;
     width: 100%;
     height: auto;
     max-height: min(34svh, 50vw);
@@ -862,8 +905,11 @@ body {
   }
 
   .carousel-slide--master .process-figure__cap {
-    flex-shrink: 0;
-    padding: 0.4rem 0.45rem;
+    flex: 0 0 auto;
+    align-self: stretch;
+    margin-top: 0.3rem;
+    padding: 0.28rem 0.4rem;
+    line-height: 1.25;
     font-size: 0.58rem;
   }
 
@@ -877,15 +923,30 @@ body {
     align-items: stretch;
   }
 
+  .found-asset-panel {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    gap: 0.25rem;
+  }
+
   .carousel-slide--process .found-asset-panel__label {
     font-size: 0.52rem;
-    margin-bottom: 0.2rem;
+    margin-bottom: 0;
+    flex: 0 0 auto;
   }
 
   .found-asset-mount,
   .found-asset-iframe-wrap {
+    flex: 0 0 auto;
+    width: 100%;
     height: min(200px, 30svh);
-    min-height: 120px;
+    min-height: 140px;
+    position: relative;
+  }
+
+  .found-asset-mount black-hole {
+    z-index: 1;
   }
 
   .carousel-slide--process .process-card__footnote {
@@ -920,6 +981,8 @@ body {
     max-width: 100%;
     max-height: min(20svh, 200px);
     flex-shrink: 0;
+    touch-action: manipulation;
+    pointer-events: auto;
   }
 
   .carousel-slide--process .transform-tuner__visual {
@@ -936,6 +999,18 @@ body {
     overflow-y: auto;
     overscroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+    position: relative;
+    z-index: 5;
+    pointer-events: auto;
+  }
+
+  .carousel-slide--process .tuner-field__range {
+    touch-action: pan-x;
+  }
+
+  .carousel-slide--process .tuner-field__switch {
+    touch-action: manipulation;
   }
 
   .carousel-slide--process .tuner-field__label {
