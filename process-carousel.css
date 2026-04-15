@@ -482,12 +482,13 @@ body {
   margin-left: auto;
   margin-right: auto;
   --final-chrome-reserve: clamp(200px, 28svh, 340px);
+  /* ~30% larger than prior 50svh cap (65/50 = 1.3) */
   width: min(
     92vw,
     27in,
     calc(
       min(
-          50svh,
+          65svh,
           max(0px, 100svh - var(--final-chrome-reserve)),
           max(0px, 100dvh - var(--final-chrome-reserve))
         ) * 27 /
@@ -497,6 +498,17 @@ body {
   max-width: 100%;
   aspect-ratio: 27 / 40;
   height: auto;
+}
+
+/* Embed preview: tear strip covers bottom edge (avoid seam / gap above frame) */
+.final-composition-mount .poster__tear {
+  height: 36%;
+  bottom: -3px;
+}
+
+.final-composition-mount .poster__tear-inner {
+  background-position: center bottom;
+  background-size: cover;
 }
 
 .process-card__footnote {
