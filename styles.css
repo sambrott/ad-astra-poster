@@ -110,18 +110,18 @@ body {
   pointer-events: none;
 }
 
-/* Blank one-sheet art — masked so the bottom third falls away to paper (see poster-tear-mask.svg). */
+/* Blank one-sheet art — masked so the bottom third falls away to paper (images/paper-tear.png via paper-tear-mask.svg). */
 .poster__bg {
   position: absolute;
   inset: 0;
   z-index: 0;
   background: url("assets/Ad-Astra-Blank.jpg") center / cover no-repeat;
   pointer-events: none;
-  -webkit-mask-image: url("images/poster-tear-mask.svg");
+  -webkit-mask-image: url("images/paper-tear-mask.svg");
   -webkit-mask-size: 100% 100%;
   -webkit-mask-repeat: no-repeat;
   -webkit-mask-position: center;
-  mask-image: url("images/poster-tear-mask.svg");
+  mask-image: url("images/paper-tear-mask.svg");
   mask-size: 100% 100%;
   mask-repeat: no-repeat;
   mask-position: center;
@@ -137,7 +137,7 @@ body {
   height: 33.333%;
   z-index: 1;
   pointer-events: none;
-  background: url("images/poster-torn-overlay.svg") center center / cover no-repeat;
+  background: url("images/paper-tear.png") center center / cover no-repeat;
 }
 
 /*
