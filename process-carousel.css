@@ -103,8 +103,8 @@ body {
 }
 
 .mobile-swipe-cue__chevron {
-  width: 0.62rem;
-  height: 0.62rem;
+  width: 0.74rem;
+  height: 0.74rem;
   border-top: 2px solid rgba(0, 0, 0, 0.6);
   border-right: 2px solid rgba(0, 0, 0, 0.6);
   transform: rotate(-45deg);
@@ -135,6 +135,20 @@ body {
   text-transform: uppercase;
   cursor: pointer;
   box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
+}
+
+.carousel-slide--final .process-card__footnote--mobile-final {
+  display: block;
+  margin-top: 0.65rem;
+  flex: 0 0 auto;
+  text-align: center;
+}
+
+@media (min-width: 769px) {
+  .carousel-slide--final .process-card__footnote--mobile-final {
+    margin-top: calc(0.9rem + 30px);
+    margin-bottom: 0.9rem;
+  }
 }
 
 @keyframes mobileSwipeUpCue {

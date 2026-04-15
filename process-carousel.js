@@ -60,8 +60,8 @@ function smoothScrollViewportToTop(viewport, root, onDone) {
 }
 
 /**
- * One-time hint: after the poster animation completes, nudge slide 0 upward and back
- * so users discover there are more sections below.
+ * Poster hint: after poster animation completes, nudge slide 0 upward and back.
+ * Repeats every 15s until user actually moves to another slide.
  * @param {HTMLElement} root
  * @param {() => number} getSlide
  */
@@ -70,45 +70,43 @@ function initPosterAutoPeekHint(root, getSlide) {
   if (!viewport) return;
   if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-  let userInteracted = false;
-  let fired = false;
-
-  const markInteracted = () => {
-    userInteracted = true;
-  };
-
-  window.addEventListener("wheel", markInteracted, { passive: true });
-  window.addEventListener("touchstart", markInteracted, { passive: true });
-  window.addEventListener("pointerdown", markInteracted, { passive: true });
-  window.addEventListener("keydown", markInteracted, { passive: true });
+  let animating = false;
+  let stopped = false;
+  let loopTimer = null;
 
   const animate = (from, to, durationMs, done) => {
     const start = performance.now();
     const ease = (t) => 1 - Math.pow(1 - t, 3);
-
     function tick(now) {
       const t = Math.min(1, (now - start) / durationMs);
       viewport.scrollTop = from + (to - from) * ease(t);
-      if (t < 1) {
-        requestAnimationFrame(tick);
-      } else if (done) {
-        done();
-      }
+      if (t < 1) requestAnimationFrame(tick);
+      else if (done) done();
     }
-
     requestAnimationFrame(tick);
   };
 
-  window.setTimeout(() => {
-    if (fired || userInteracted) return;
-    if (getSlide() !== 0) return;
+  const stopLoop = () => {
+    stopped = true;
+    if (loopTimer) {
+      clearInterval(loopTimer);
+      loopTimer = null;
+    }
+  };
 
-    fired = true;
+  const maybeRunPeek = () => {
+    if (stopped || animating) return;
+    if (getSlide() !== 0) {
+      stopLoop();
+      return;
+    }
     const unit = Math.max(1, getMobileCarouselSlideHeight(viewport));
     const peekDistance = Math.min(220, Math.max(84, unit * 0.16));
     const startTop = viewport.scrollTop;
+    if (startTop > 4) return;
     const targetTop = startTop + peekDistance;
 
+    animating = true;
     root.dataset.carouselScrollLock = "1";
     viewport.classList.add("is-programmatic-scroll");
 
@@ -120,8 +118,24 @@ function initPosterAutoPeekHint(root, getSlide) {
         if (typeof applySlide === "function") {
           applySlide(root, 0, { skipScroll: true });
         }
+        animating = false;
       });
     });
+  };
+
+  const onRealNavigation = () => {
+    if (getSlide() !== 0) {
+      stopLoop();
+    }
+  };
+
+  viewport.addEventListener("scroll", onRealNavigation, { passive: true });
+  window.addEventListener("keydown", onRealNavigation, { passive: true });
+
+  window.setTimeout(() => {
+    if (stopped) return;
+    maybeRunPeek();
+    loopTimer = window.setInterval(maybeRunPeek, 15000);
   }, POSTER_PEEK_DELAY_MS);
 }
 
@@ -981,10 +995,9 @@ function init() {
 
   const goTo = (next, opts = {}) => {
     slide = ((next % TOTAL_SLIDES) + TOTAL_SLIDES) % TOTAL_SLIDES;
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
     const viewport = document.getElementById("carousel-viewport");
 
-    if (opts.forceSmoothMobileTop && isMobile && viewport) {
+    if (opts.forceSmoothMobileTop && viewport) {
       applySlide(root, slide, { skipScroll: true });
       smoothScrollViewportToTop(viewport, root, () => {
         slide = 0;
@@ -1026,7 +1039,7 @@ function init() {
     el.addEventListener("click", () => {
       const n = Number.parseInt(el.getAttribute("data-carousel-go") || "0", 10);
       if (Number.isNaN(n)) return;
-      if (n === 0 && window.matchMedia("(max-width: 768px)").matches) {
+      if (n === 0) {
         goTo(0, { forceSmoothMobileTop: true });
       } else {
         goTo(n);
@@ -1035,11 +1048,7 @@ function init() {
   });
 
   document.getElementById("carousel-back-to-top")?.addEventListener("click", () => {
-    if (window.matchMedia("(max-width: 768px)").matches) {
-      goTo(0, { forceSmoothMobileTop: true });
-    } else {
-      goTo(0);
-    }
+    goTo(0, { forceSmoothMobileTop: true });
   });
 
   root.addEventListener("keydown", (e) => {
