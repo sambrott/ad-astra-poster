@@ -111,8 +111,9 @@ body {
 }
 
 /*
-  Torn paper sits above the JPEG, clipped by .poster-frame overflow.
-  Flipped vs prior: vertical mirror so the strip reads correctly over the poster.
+  Torn paper above the blank JPEG and above the wormhole strip so it actually paints
+  (stage was covering z-index:1). Clipped by .poster-frame overflow.
+  scaleY(-1) + origin bottom previously reflected the box below the frame → invisible.
 */
 .poster__tear {
   position: absolute;
@@ -120,11 +121,11 @@ body {
   right: 0;
   bottom: 0;
   height: 33.333%;
-  z-index: 1;
+  z-index: 4;
   pointer-events: none;
   background: url("images/paper-tear.png") center center / cover no-repeat;
   transform: scaleY(-1);
-  transform-origin: bottom center;
+  transform-origin: center center;
 }
 
 /*
