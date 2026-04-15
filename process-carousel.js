@@ -421,6 +421,7 @@ function wireTunerControls() {
   const hole = document.getElementById("tuner-slider-hole");
   const astro = document.getElementById("tuner-slider-astro");
   const astroToggle = document.getElementById("tuner-toggle-astro");
+  const astroSwitchTrack = root.querySelector(".tuner-field__switch-track");
 
   const sync = () => {
     bh._tunerTypeScaleMul = Number.parseFloat(type?.value || "1");
@@ -448,7 +449,18 @@ function wireTunerControls() {
   [type, motion, hole, astro].forEach((el) => {
     el?.addEventListener("input", sync);
   });
+  astroToggle?.addEventListener("input", sync);
   astroToggle?.addEventListener("change", sync);
+  astroSwitchTrack?.addEventListener("click", () => {
+    requestAnimationFrame(sync);
+  });
+  astroSwitchTrack?.addEventListener(
+    "touchend",
+    () => {
+      requestAnimationFrame(sync);
+    },
+    { passive: true }
+  );
   bh.dataset.tunerWired = "1";
   sync();
 }
