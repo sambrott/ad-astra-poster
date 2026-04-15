@@ -10,47 +10,265 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap"
       rel="stylesheet"
     />
     <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="process-carousel.css" />
   </head>
   <body>
-    <div class="poster-page">
-      <div class="poster-frame">
-        <!-- 27×40 in layout (8100×12000 JPEG); scales down if the viewport is smaller -->
-        <figure class="poster" aria-label="Ad Astra one-sheet">
-          <div class="poster__bg" role="presentation"></div>
-          <div
-            class="poster__tear"
-            role="presentation"
-            aria-hidden="true"
+    <div class="app-carousel" id="app-carousel" data-carousel-slide="0">
+      <div class="carousel-viewport">
+        <div class="carousel-track" id="carousel-track">
+          <!-- 0: live poster (unchanged) -->
+          <section
+            class="carousel-slide carousel-slide--poster"
+            id="slide-poster"
+            aria-label="Animated poster"
           >
-            <div class="poster__tear-inner"></div>
-          </div>
-          <div class="poster__stage">
-            <black-hole>
-              <canvas class="js-canvas-back" aria-hidden="true"></canvas>
-              <canvas class="js-canvas-front" aria-hidden="true"></canvas>
-            </black-hole>
-            <div class="astronaut-float" aria-hidden="true">
-              <div class="astronaut-float__depth">
-                <img
-                  class="astronaut-float__img"
-                  src="images/astronaut.png"
-                  alt=""
-                  decoding="async"
-                  fetchpriority="high"
-                  width="378"
-                  height="426"
-                  onerror="this.onerror=null;this.src='images/astronaut.svg'"
-                />
+            <div class="poster-page">
+              <div class="poster-frame">
+                <figure class="poster" aria-label="Ad Astra one-sheet">
+                  <div class="poster__bg" role="presentation"></div>
+                  <div class="poster__tear" role="presentation" aria-hidden="true">
+                    <div class="poster__tear-inner"></div>
+                  </div>
+                  <div class="poster__stage">
+                    <black-hole>
+                      <canvas class="js-canvas-back" aria-hidden="true"></canvas>
+                      <canvas class="js-canvas-front" aria-hidden="true"></canvas>
+                    </black-hole>
+                    <div class="astronaut-float" aria-hidden="true">
+                      <div class="astronaut-float__depth">
+                        <img
+                          class="astronaut-float__img"
+                          src="images/astronaut.png"
+                          alt=""
+                          decoding="async"
+                          fetchpriority="high"
+                          width="378"
+                          height="426"
+                          onerror="this.onerror=null;this.src='images/astronaut.svg'"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </figure>
               </div>
             </div>
-          </div>
-        </figure>
+          </section>
+
+          <!-- 1: Master Class -->
+          <section
+            class="carousel-slide carousel-slide--process"
+            aria-labelledby="slide-master-title"
+          >
+            <article class="process-card">
+              <h2 class="process-card__title" id="slide-master-title">Master Class</h2>
+              <p class="process-card__body">
+                Tobias Van Schneider is my design North Star. A specialist in web design, he
+                creates elegant work across mediums in digital, print and industrial. In this
+                movie poster for Ad Astra, Van Schneider uses type as the key element to
+                emphasize the lack of connection between the protagonist while alone in space
+                searching for his father. Right: A recreation of Van Schneider’s work to study
+                his process.
+              </p>
+              <div class="process-card__compare" role="group" aria-label="Original and recreation">
+                <figure class="process-figure">
+                  <img
+                    class="process-figure__img"
+                    src="images/master-class-original.jpg"
+                    alt="Original Ad Astra poster reference"
+                    width="400"
+                    height="600"
+                    loading="lazy"
+                  />
+                  <figcaption class="process-figure__cap">Original</figcaption>
+                </figure>
+                <figure class="process-figure">
+                  <img
+                    class="process-figure__img"
+                    src="images/master-class-recreation.jpg"
+                    alt="Recreation of the poster"
+                    width="400"
+                    height="600"
+                    loading="lazy"
+                  />
+                  <figcaption class="process-figure__cap">Recreation</figcaption>
+                </figure>
+              </div>
+            </article>
+          </section>
+
+          <!-- 2: Found Asset -->
+          <section
+            class="carousel-slide carousel-slide--process"
+            aria-labelledby="slide-found-title"
+          >
+            <article class="process-card">
+              <h2 class="process-card__title" id="slide-found-title">Found Asset</h2>
+              <p class="process-card__body">
+                Using a javascript animation by Antoine Wodniack found on Codepen, I sought to
+                recreate the wormhole effect with the typography used in the original
+                composition.
+              </p>
+              <div
+                class="found-asset-mount"
+                id="found-asset-mount"
+                data-lazy-hole
+                aria-label="Wormhole animation preview"
+              ></div>
+              <p class="process-card__footnote">
+                <a
+                  class="process-card__link"
+                  href="https://codepen.io/wodniack/pen/XJbYWXx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >Open the CodePen source</a
+                >
+              </p>
+            </article>
+          </section>
+
+          <!-- 3: Transform using AI -->
+          <section
+            class="carousel-slide carousel-slide--process"
+            aria-labelledby="slide-ai-title"
+          >
+            <article class="process-card">
+              <h2 class="process-card__title" id="slide-ai-title">Transform using AI</h2>
+              <p class="process-card__body">
+                Using Cursor’s AI agent Composer 2, I transformed the original wormhole into
+                one composed of the “LOSS OF SIGNAL” text. I also included an animation of the
+                astronaut descending into the wormhole.
+              </p>
+              <div class="process-card__split">
+                <div class="process-card__split-text">
+                  <p class="process-card__body process-card__body--tight">
+                    The same canvas pipeline drives both the CodePen-inspired wormhole and the
+                    final poster: discs, particles, and layered typography in IBM Plex Mono.
+                  </p>
+                </div>
+                <div class="process-card__split-visual">
+                  <img
+                    src="assets/Ad-Astra-Blank.jpg"
+                    alt=""
+                    class="process-thumb"
+                    width="320"
+                    height="480"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            </article>
+          </section>
+
+          <!-- 4: Physical Manipulation -->
+          <section
+            class="carousel-slide carousel-slide--process"
+            aria-labelledby="slide-phys-title"
+          >
+            <article class="process-card">
+              <h2 class="process-card__title" id="slide-phys-title">Physical Manipulation</h2>
+              <p class="process-card__body">
+                Adding a torn piece of paper to the bottom section of the poster directs
+                attention away from the title and towards the movement on the upper third. The
+                torn paper disappears as the astronaut reaches the bottom to reveal the rest of
+                the copy.
+              </p>
+              <div class="process-card__single-visual">
+                <img
+                  src="images/paper-tear.png"
+                  alt="Torn paper edge texture used in the composition"
+                  class="process-tear-sample"
+                  width="635"
+                  height="360"
+                  loading="lazy"
+                />
+              </div>
+            </article>
+          </section>
+
+          <!-- 5: Final Composition -->
+          <section
+            class="carousel-slide carousel-slide--process"
+            aria-labelledby="slide-final-title"
+          >
+            <article class="process-card">
+              <h2 class="process-card__title" id="slide-final-title">Final Composition</h2>
+              <p class="process-card__body">
+                An animated movie poster using assets from multiple creators and integrated to
+                further emphasize the themes of loss and miscommunication in the film. The
+                motion is available on this site—return to the first slide to view it live.
+              </p>
+              <div class="process-card__hero">
+                <img
+                  src="assets/Ad-Astra-Blank.jpg"
+                  alt="Final printed poster artwork"
+                  class="process-hero-img"
+                  width="540"
+                  height="800"
+                  loading="lazy"
+                />
+              </div>
+              <p class="process-card__cta">
+                <button type="button" class="process-btn" data-carousel-go="0">
+                  View live poster
+                </button>
+              </p>
+            </article>
+          </section>
+        </div>
       </div>
+
+      <!-- Home: enter process deck -->
+      <button
+        type="button"
+        class="carousel-enter"
+        id="carousel-enter"
+        aria-label="See how it’s made"
+      >
+        <span class="carousel-enter__chev" aria-hidden="true">→</span>
+        <span class="carousel-enter__label">See how it’s made</span>
+      </button>
+
+      <!-- Slides 1–5: prev / next -->
+      <div class="carousel-fabs" id="carousel-fabs" aria-hidden="true">
+        <button
+          type="button"
+          class="carousel-fab carousel-fab--prev"
+          id="carousel-prev"
+          aria-label="Previous"
+        >
+          <span aria-hidden="true">←</span>
+        </button>
+        <button
+          type="button"
+          class="carousel-fab carousel-fab--next"
+          id="carousel-next"
+          aria-label="Next"
+        >
+          <span aria-hidden="true">→</span>
+        </button>
+      </div>
+
+      <nav class="carousel-dots" id="carousel-dots" aria-label="Slides">
+        <button
+          type="button"
+          class="carousel-dot is-active"
+          data-slide="0"
+          aria-current="true"
+          aria-label="Poster"
+        ></button>
+        <button type="button" class="carousel-dot" data-slide="1" aria-label="Master Class"></button>
+        <button type="button" class="carousel-dot" data-slide="2" aria-label="Found Asset"></button>
+        <button type="button" class="carousel-dot" data-slide="3" aria-label="Transform using AI"></button>
+        <button type="button" class="carousel-dot" data-slide="4" aria-label="Physical manipulation"></button>
+        <button type="button" class="carousel-dot" data-slide="5" aria-label="Final composition"></button>
+      </nav>
     </div>
+
     <script type="module" src="app.js"></script>
+    <script type="module" src="process-carousel.js"></script>
   </body>
 </html>
