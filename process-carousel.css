@@ -72,6 +72,7 @@ body {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.55);
 }
 
 .mobile-swipe-cue__chevrons {
@@ -92,6 +93,27 @@ body {
 
 .mobile-swipe-cue__chevron:nth-child(2) {
   animation-delay: 0.16s;
+}
+
+.process-card__footnote--mobile-final {
+  display: none;
+}
+
+.process-card__return-top-btn {
+  appearance: none;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: #fff;
+  color: #0a0a0a;
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 0.55rem 1.15rem;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.32);
 }
 
 @keyframes mobileSwipeUpCue {
@@ -807,7 +829,7 @@ body {
   }
 
   .carousel-back-to-top {
-    display: none;
+    display: none !important;
     position: fixed;
     left: 50%;
     bottom: max(16px, env(safe-area-inset-bottom, 0px));
@@ -1165,6 +1187,11 @@ body {
     pointer-events: none;
     opacity: 1;
     transition: opacity 0.25s ease;
+    background: rgba(0, 0, 0, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 999px;
+    padding: 0.34rem 0.72rem 0.42rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   }
 
   .app-carousel:not([data-carousel-slide="0"]) .mobile-swipe-cue {
@@ -1181,13 +1208,15 @@ body {
   /* Transform slide: animation first, full-width controls below */
   .carousel-slide--transform .transform-tuner-mount {
     margin-top: 0.45rem;
+    flex: 1 1 auto;
+    min-height: 0;
     overflow-y: auto;
     overscroll-behavior: auto;
     -webkit-overflow-scrolling: touch;
   }
 
   .carousel-slide--transform .transform-tuner {
-    gap: 10px;
+    gap: 12px;
   }
 
   .carousel-slide--transform .transform-tuner__visual {
@@ -1195,21 +1224,23 @@ body {
   }
 
   .carousel-slide--transform .wormhole-tuner-frame {
-    min-height: 188px;
-    max-height: min(40svh, 340px);
+    min-height: 220px;
+    max-height: min(46svh, 390px);
   }
 
   .carousel-slide--transform .transform-tuner__panel {
     order: 2;
     flex: 0 0 auto;
     overflow: visible;
-    padding: 0.65rem 0.72rem;
+    max-height: none;
+    max-width: 100%;
+    padding: 0.7rem 0.8rem;
   }
 
   .carousel-slide--transform .tuner-field {
     grid-template-columns: 1fr;
     grid-template-rows: auto auto auto;
-    gap: 0.32rem;
+    gap: 0.38rem;
   }
 
   .carousel-slide--transform .tuner-field__range {
@@ -1219,6 +1250,13 @@ body {
   .carousel-slide--transform .tuner-field__value {
     min-width: 0;
     text-align: left;
+  }
+
+  .carousel-slide--final .process-card__footnote--mobile-final {
+    display: block;
+    margin-top: 0.55rem;
+    flex: 0 0 auto;
+    text-align: center;
   }
 }
 
